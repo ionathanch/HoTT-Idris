@@ -163,3 +163,58 @@ splitProduct pq = (\x => fst (pq x), \x => snd (pq x))
 -----------------------
 ---- IDENTITY TYPE ----
 -----------------------
+
+-- Recursor for identity: indiscernibility of identicals
+rec_id : forall c. (p : x === y) -> c x -> c y
+rec_id Refl cx = cx
+
+-- Induction for identity: path induction
+-- Intuitively, if C(x, x) holds when x === x,
+-- then C(x, y) holds when x === y.
+-- C(x, y) may also depend on the path from x to y, but to prove
+-- induction we only need to consider when the path is x === x.
+ind_id : (C : (x : a) -> (y : a) -> x === y -> Type) ->
+  (c : (x : a) -> C x x Refl) ->
+  (x : a) -> (y : a) -> (p : x === y) -> C x y p
+ind_id _ c x x Refl = c x
+
+-- Based path induction: induction for identity,
+-- but with one end of the path fixed at some point.
+-- Intuitively, if C(a, a) and a === a holds,
+-- then C(a, x) holds when a === x.
+based_ind_id : forall A. (a : A) -> (C : (x : A) -> a === x -> Type) ->
+  (c : C a Refl) ->
+  (x : A) -> (p : a === x) -> C x p
+based_ind_id a _ c a Refl = c
+
+-- Path induction can be defined from based path induction;
+-- The first argument x becomes the fixed endpoint in the based path.
+ind'_id : (C : (x : a) -> (y : a) -> x === y -> Type) ->
+  (c : (x : a) -> C x x Refl) ->
+  (x : a) -> (y : a) -> (p : x === y) -> C x y p
+ind'_id ctype c x y p = based_ind_id x (ctype x) (c x) y p
+
+-- Based path induction can be defined from path induction
+-- Let D(x, y, p) = (C : (z : A) -> x === z -> Type) -> C x Refl -> C y p.
+-- In ind_id, instantiating C with D, we have
+--  ind_id D : (c : (x : a) -> (C : (z : A) -> x === z -> Type) -> C x Refl -> C x Refl) ->
+--    (x : a) -> (y : a) -> (p : x === y) ->
+--    (C : (z : A) -> x === z -> Type) -> C x Refl -> C y p
+-- Then we instantiate with an identity function d = (\x, C, c => c) to get
+--  ind_id D d : (x : a) -> (y : a) -> (p : x === y) ->
+--    (C : (z : A) -> x === z -> Type) -> C x Refl -> C y p
+-- Next is straightforward: we instantiate with a, x, and p:
+--  ind_id D d a x p : (C : (z : A) -> a === z -> Type) -> C a Refl -> C x p
+-- Finally, this is exactly the ctype and c arguments, so we get
+--  ind_id D d a x p ctype c = C x p
+based_ind'_id : forall A. (a : A) -> (C : (x : A) -> a === x -> Type) ->
+  (c : C a Refl) ->
+  (x : A) -> (p : a === x) -> C x p
+based_ind'_id a ctype c x p = ind_id
+  (\x, y, p => (C : (z : A) -> x === z -> Type) -> C x Refl -> C y p)
+  (\_, _, c => c)
+  a x p ctype c
+
+infix 9 =/=
+(=/=) : a -> a -> Type
+x =/= y = x === y -> Void
