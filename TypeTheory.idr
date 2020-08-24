@@ -165,18 +165,23 @@ splitProduct pq = (\x => fst (pq x), \x => snd (pq x))
 -----------------------
 
 -- Recursor for identity: indiscernibility of identicals
-rec_id : forall c. (p : x === y) -> c x -> c y
-rec_id Refl cx = cx
+rec_id : (C : a -> Type) -> (x, y : a) -> (p : x === y) -> C x -> C y
+rec_id _ x x Refl cx = cx
 
 -- Induction for identity: path induction
 -- Intuitively, if C(x, x) holds when x === x,
 -- then C(x, y) holds when x === y.
 -- C(x, y) may also depend on the path from x to y, but to prove
 -- induction we only need to consider when the path is x === x.
+export
 ind_id : (C : (x : a) -> (y : a) -> x === y -> Type) ->
   (c : (x : a) -> C x x Refl) ->
-  (x : a) -> (y : a) -> (p : x === y) -> C x y p
+  (x, y : a) -> (p : x === y) -> C x y p
 ind_id _ c x x Refl = c x
+
+-- The recursor can be defined from induction
+rec'_id : (C : a -> Type) -> (x, y : a) -> (p : x === y) -> C x -> C y
+rec'_id c x y refl = ind_id (\x, y, _ => c x -> c y) (\_, cx => cx) x y refl
 
 -- Based path induction: induction for identity,
 -- but with one end of the path fixed at some point.
