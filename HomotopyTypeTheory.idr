@@ -83,6 +83,29 @@ associativity p q r =
   in J D (\_, _, _ => Refl) p q r
 
 
+{- Whiskering as defined as part of Theorem 2.1.6
+  Later we will define whiskering using ap instead, which is much simpler
+
+-- Right whisker: If p = q then p · r = q · r
+whiskr : forall A. {x, y, z : A} -> {p, q : x === y} -> (a : p === q) -> (r : y === z) -> concat p r === concat q r
+whiskr alpha r =
+  let D : Dtype A
+      D y z r = {x : A} -> (p, q : x === y) -> (alpha : p === q) -> concat p r === concat q r
+      d : (a : A) -> {x : A} -> (p, q : x === a) -> (alpha : p === q) -> concat p Refl === concat q Refl
+      d _ p q alpha = concat (invert (rightId p)) (concat alpha (rightId q))
+  in J D d r p q alpha
+
+-- Left whisker: If r = s then q · r = q · s
+whiskl : forall A. {x, y, z : A} -> {r, s : y === z} -> (q : x === y) -> (b : r === s) -> concat q r === concat q s
+whiskl q beta =
+  let D : Dtype A
+      D x y q = {z : A} -> (r, s : y === z) -> (beta : r === s) -> concat q r === concat q s
+      d : (a : A) -> {z : A} -> (r, s : a === z) -> (beta : r === s) -> concat Refl r === concat Refl s
+      d _ r s beta = concat (invert (leftId r)) (concat beta (leftId s))
+  in J D d q r s beta
+-}
+
+
 -- Loop space of a point in a type
 Omega : (A : Type) -> (a : A) -> Type
 Omega _ a = a === a
@@ -136,6 +159,15 @@ ap_concat f g p = J (\_, _, p => ap g (ap f p) === ap (g . f) p) (\_ => Refl) p
 -- ap id p = p
 ap_ident : forall A. {x, y : A} -> (p : x === y) -> ap (id {a = A}) p === p
 ap_ident p = J (\_, _, p => ap (id {a = A}) p === p) (\_ => Refl) p
+
+
+-- Right whisker: If p = q then p · r = q · r
+whiskr : forall A. {x, y, z : A} -> {p, q : x === y} -> (a : p === q) -> (r : y === z) -> concat p r === concat q r
+whiskr alpha r = ap (\s => concat s r) alpha
+
+-- Left whisker: If r = s then q · r = q · s
+whiskl : forall A. {x, y, z : A} -> {r, s : y === z} -> (q : x === y) -> (b : r === s) -> concat q r === concat q s
+whiskl q beta = ap (\p => concat q p) beta
 
 --------------------------------------
 ---- TYPE FAMILIES are FIBRATIONS ----
@@ -222,4 +254,17 @@ hom_assoc hom p =
   in J D d p
 
 hom_commute : forall A. {f : A -> A} -> (H : f ~~ id {a = A}) -> (a : A) -> H (f a) === ap f (H a)
-hom_commute hom a = ?hc
+hom_commute hom a =
+  let h1 : concat (hom (f a)) (ap (id {a = A}) (hom a)) === concat (ap f (hom a)) (hom a)
+      h1 = hom_assoc hom (hom a)
+      h2 : concat (concat (hom (f a)) (ap (id {a = A}) (hom a))) (invert (hom a)) === concat (concat (ap f (hom a)) (hom a)) (invert (hom a))
+      h2 = whiskr h1 (invert (hom a))
+      h3 : concat (hom (f a)) (concat (ap (id {a = A}) (hom a)) (invert (hom a))) === concat (concat (ap f (hom a)) (hom a)) (invert (hom a))
+      h3 = concat (associativity (hom (f a)) (ap (id {a = A}) (hom a)) (invert (hom a))) h2
+      h4 : concat (hom (f a)) (concat (ap (id {a = A}) (hom a)) (invert (hom a))) === concat (ap f (hom a)) (concat (hom a) (invert (hom a)))
+      h4 = concat h3 (invert $ associativity (ap f (hom a)) (hom a) (invert (hom a)))
+      k1 : concat (ap f (hom a)) (concat (hom a) (invert (hom a))) === concat (ap f (hom a)) Refl
+      k1 = ap (\x => concat (ap f (hom a)) x) (rightInv (hom a))
+      h5 : concat (hom (f a)) (concat (ap (id {a = A}) (hom a)) (invert (hom a))) === concat (ap f (hom a)) Refl
+      --h5 = concat h5 k1
+  in ?hc
