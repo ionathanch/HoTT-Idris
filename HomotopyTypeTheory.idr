@@ -53,6 +53,14 @@ leftId p = J (\_, _, p => p === concat Refl p) (\_ => Refl) p
 rightId : forall A. {x, y : A} -> (p : x === y) -> p === concat p Refl
 rightId p = J (\_, _, p => p === concat p Refl) (\_ => Refl) p
 
+-- Refl · p = p · Refl
+leftrightId : forall A. {x, y : A} -> (p : x === y) -> concat Refl p === concat p Refl
+leftrightId p = concat (invert (leftId p)) (rightId p)
+
+-- p · Refl = Refl · p
+rightleftId : forall A. {x, y : A} -> (p : x === y) -> concat p Refl === concat Refl p
+rightleftId p = concat (invert (rightId p)) (leftId p)
+
 -- p⁻¹ · p = Refl
 leftInv : forall A. {x, y : A} -> (p : x === y) -> concat (invert p) p === Refl
 leftInv p = J (\_, _, p => concat (invert p) p === Refl) (\_ => Refl) p
@@ -204,9 +212,14 @@ hom_trans : forall A, P. {f, g, h : (x : A) -> P x} -> f ~~ g -> g ~~ h -> f ~~ 
 hom_trans fg gh x = concat (fg x) (gh x)
 
 
-hom_concat : forall A, B. {f, g : A -> B} -> (H : f ~~ g) -> {x, y : A} -> (p : x === y) ->
+hom_assoc : forall A, B. {f, g : A -> B} -> (H : f ~~ g) -> {x, y : A} -> (p : x === y) ->
   concat (H x) (ap g p) === concat (ap f p) (H y)
-hom_concat hom p =
+hom_assoc hom p =
   let D : Dtype A
       D x y p = concat (hom x) (ap g p) === concat (ap f p) (hom y)
-  in J D (\_ => ?hc) p
+      d : (a : A) -> concat (hom a) Refl === concat Refl (hom a)
+      d a = rightleftId (hom a)
+  in J D d p
+
+hom_commute : forall A. {f : A -> A} -> (H : f ~~ id {a = A}) -> (a : A) -> H (f a) === ap f (H a)
+hom_commute hom a = ?hc
