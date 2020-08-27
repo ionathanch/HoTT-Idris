@@ -142,11 +142,12 @@ loopSpaceN (S n) pt = loopSpaceN n (loopSpace pt)
 
 -- Application of f to a path; action on paths of f
 -- In other words, mapping f over a path
+-- We also write f(p)
 ap : forall A, B. (f : A -> B) -> {x, y : A} -> x =:= y -> f x =:= f y
 ap f p = J (\x, y, _ => f x =:= f y) (\_ => Refl) p
 
 
--- ap_f (p · q) = (ap f p) · (ap f q)
+-- f(p · q) = f(p) · f(q)
 ap_distrib : forall A, B. (f : A -> B) -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) ->
   ap f (p <> q) =:= ap f p <> ap f q
 ap_distrib f p q =
@@ -155,15 +156,15 @@ ap_distrib f p q =
         ap f (p <> q) =:= ap f p <> ap f q
   in J D (\_, _ => Refl) p q
 
--- ap f p⁻¹ = (ap f p)⁻¹
+-- f(p⁻¹) = f(p)⁻¹
 ap_invert : forall A, B. (f : A -> B) -> {x, y : A} -> (p : x =:= y) -> ap f (invert p) =:= invert (ap f p)
 ap_invert f p = J (\_, _, p => ap f (invert p) =:= invert (ap f p)) (\_ => Refl) p
 
--- ap g (ap f p) = ap (g ∘ f) p
+-- g(f(p)) = (g ∘ f)(p)
 ap_concat : forall A, B, C. (f : A -> B) -> {x, y : A} -> (g : B -> C) -> (p : x =:= y) -> ap g (ap f p) =:= ap (g . f) p
 ap_concat f g p = J (\_, _, p => ap g (ap f p) =:= ap (g . f) p) (\_ => Refl) p
 
--- ap id p = p
+-- id(p) = p
 ap_ident : forall A. {x, y : A} -> (p : x =:= y) -> ap (id {a = A}) p =:= p
 ap_ident p = J (\_, _, p => ap (id {a = A}) p =:= p) (\_ => Refl) p
 
@@ -183,7 +184,7 @@ q <| beta = ap (\p => q <> p) beta
 --------------------------------------
 
 -- The indiscernibility of identicals, renamed
--- We also write p* := transport P p for some implicit P
+-- We also write p* := transport P p for some implicit P, or p[P]* explicitly
 transport : forall A. (P : A -> Type) -> {x, y : A} -> (p : x =:= y) -> P x -> P y
 transport ptype p = J (\x, y, _ => ptype x -> ptype y) (\_, px => px) p
 
@@ -195,25 +196,27 @@ lift u p =
       D x y p = MkDPair {p = P} x u =:= MkDPair {p = P} y (transport P p u)
   in J D (\_ => Refl) p
 
--- Dependent ap, i.e. mapping over a path with a dependent function f
+-- Dependent ap, i.e. mapping over a path p with a dependent function f
+-- Similarly, we also write f(p) when it is clear that f is dependent
 apd : forall A. {P : A -> Type} -> (f : (a : A) -> P a) -> {x, y : A} -> (p : x =:= y) -> transport P p (f x) =:= f y
 apd f p = J (\x, y, p => transport P p (f x) =:= f y) (\_ => Refl) p
 
 -- Transporting in a constant family type P := (\_ => B) does nothing
-transportconst : forall A. (B : Type) -> {x, y : A} -> (p : x =:= y) -> (b : B) -> transport (\_ => B) p b =:= b
-transportconst btype p b = J (\_, _, p => transport (\_ => btype) p b =:= b) (\_ => Refl) p
+transportConst : forall A. (B : Type) -> {x, y : A} -> (p : x =:= y) -> (b : B) -> transport (\_ => B) p b =:= b
+transportConst btype p b = J (\_, _, p => transport (\_ => btype) p b =:= b) (\_ => Refl) p
 
 
--- apd f p = transportconst B p (f x) · ap f p
+-- f(p) = transportConst B p (f x) · f(p)
 -- That is, dependently applying a nondependent function to a path
 -- yields the same thing as nondependently applying the function
 apd_nondep : forall A. (B : Type) -> (f : A -> B) -> {x, y : A} -> (p : x =:= y) ->
-  apd f p =:= transportconst B p (f x) <> ap f p
+  apd f p =:= transportConst B p (f x) <> ap f p
 apd_nondep btype f p =
   let D : Dtype A
-      D x y p = apd f p =:= transportconst btype p (f x) <> ap f p
+      D x y p = apd f p =:= transportConst btype p (f x) <> ap f p
   in J D (\_ => Refl) p
 
+-- q* (p* u) = (p <> q)* u
 transport_distrib : forall A. (P : A -> Type) -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) -> (u : P x) ->
   transport P q (transport P p u) =:= transport P (p <> q) u
 transport_distrib ptype p q u =
@@ -221,6 +224,7 @@ transport_distrib ptype p q u =
       D x y p = {z : A} -> (q : y =:= z) -> (u : ptype x) -> transport ptype q (transport ptype p u) =:= transport ptype (p <> q) u
   in J D (\_, _, _ => Refl) p q u
 
+-- p[P ∘ f]* u = f(p)[P]* u
 transport_ap : forall A, B. (f : A -> B) -> (P : B -> Type) -> {x, y : A} -> (p : x =:= y) -> (u : P (f x)) ->
   transport (P . f) p u =:= transport P (ap f p) u
 transport_ap f ptype p u =
@@ -228,6 +232,7 @@ transport_ap f ptype p u =
       D x y p = (u : ptype (f x)) -> transport (ptype . f) p u =:= transport ptype (ap f p) u
   in J D (\_, _ => Refl) p u
 
+-- p[Q]* (f x u) = f y (p[P]* u)
 transport_commute : forall A. (P, Q : A -> Type) -> (f : (a : A) -> P a -> Q a) -> {x, y : A} -> (p : x =:= y) -> (u : P x) ->
   transport Q p (f x u) =:= f y (transport P p u)
 transport_commute ptype qtype f p u =
@@ -239,43 +244,51 @@ transport_commute ptype qtype f p u =
 ---- HOMOTOPIES and EQUIVALENCES ----
 -------------------------------------
 
+-- Homotopy, i.e. extensionality
 infix 5 ~~
 (~~) : forall A, P. (f, g : (x : A) -> P x) -> Type
 f ~~ g = (x : A) -> f x =:= g x
 
+-- Reflexivity: f ~ f
 hom_refl : f ~~ f
 hom_refl _ = Refl
 
-hom_symm : forall A, P. {f, g : (x : A) -> P x} -> f ~~ g -> g ~~ f
-hom_symm fg x = invert (fg x)
+-- Symmetry: If f ~ g then g ~ f
+hom_sym : forall A, P. {f, g : (x : A) -> P x} -> f ~~ g -> g ~~ f
+hom_sym fg x = invert (fg x)
 
+-- Transitivity: If f ~ g and g ~ h then f ~ h
 hom_trans : forall A, P. {f, g, h : (x : A) -> P x} -> f ~~ g -> g ~~ h -> f ~~ h
 hom_trans fg gh x = fg x <> gh x
 
 
-hom_assoc : forall A, B. {f, g : A -> B} -> (H : f ~~ g) -> {x, y : A} -> (p : x =:= y) ->
+-- H x · g(p) = f(p) · H y
+naturality : forall A, B. {f, g : A -> B} -> (H : f ~~ g) -> {x, y : A} -> (p : x =:= y) ->
   H x <> ap g p =:= ap f p <> H y
-hom_assoc hom p =
+naturality hom p =
   let D : Dtype A
       D x y p = hom x <> ap g p =:= ap f p <> hom y
       d : (a : A) -> hom a <> Refl =:= Refl <> hom a
       d a = rightleftId (hom a)
   in J D d p
 
-hom_assoc_id : forall A. {f : A -> A} -> (H : f ~~ id {a = A}) -> (a : A) -> H (f a) =:= ap f (H a)
-hom_assoc_id hom a =
-  let naturality : hom (f a) <> hom a =:= ap f (hom a) <> hom a
-      naturality = h1 <> h2
+-- H (f a) = f(H a)
+-- This follows from naturality, with x = f x, y = x, f = f, g = id
+-- In short, H : f ~ id
+hom_commute : forall A. {f : A -> A} -> (H : f ~~ id {a = A}) -> (a : A) -> H (f a) =:= ap f (H a)
+hom_commute hom a =
+  let naturalized : hom (f a) <> hom a =:= ap f (hom a) <> hom a
+      naturalized = h1 <> h2
         where
           h1 : hom (f a) <> hom a =:= hom (f a) <> ap (id {a = A}) (hom a)
           h1 = hom (f a) <| invert (ap_ident (hom a))
           h2 : hom (f a) <> ap (id {a = A}) (hom a) =:= ap f (hom a) <> hom a
-          h2 = hom_assoc hom (hom a)
+          h2 = naturality hom (hom a)
       whisked : hom (f a) <> (hom a <> (invert (hom a))) =:= ap f (hom a) <> (hom a <> (invert (hom a)))
       whisked = hl <> h <> hr
         where
           h : (hom (f a) <> hom a) <> invert (hom a) =:= (ap f (hom a) <> hom a) <> invert (hom a)
-          h = naturality |> invert (hom a)
+          h = naturalized |> invert (hom a)
           hl : hom (f a) <> (hom a <> (invert (hom a))) =:= (hom (f a) <> hom a) <> invert (hom a)
           hl = associativity (hom (f a)) (hom a) (invert (hom a))
           hr : (ap f (hom a) <> hom a) <> invert (hom a) =:= ap f (hom a) <> (hom a <> (invert (hom a)))
@@ -295,3 +308,65 @@ hom_assoc_id hom a =
           hid : ap f (hom a) <> Refl =:= ap f (hom a)
           hid = invert (rightId (ap f (hom a)))
   in cancel_left <> whisked <> cancel_right
+
+
+{-
+  Technical note: Unification involving dependent pairs seems to be broken
+  (see https://github.com/idris-lang/Idris2/issues/589);
+  the terms that cause unification errors below have been commented out
+  and replaced with holes for now.
+-}
+
+
+-- The quasi-inverse of f is a function g such that
+-- f · g ~ id and g · f ~ id
+qinv : forall A, B. (f : A -> B) -> Type
+qinv f = (g : B -> A ** (f . g ~~ id {a = B}, g . f ~~ id {a = A}))
+
+-- The quasi-inverse of id is id
+qinv_ident : forall A. qinv (id {a = A})
+qinv_ident = MkDPair id (\x => ?qid {- Refl -}, \x => Refl)
+
+
+-- Proof of equivalence defined as a bi-invertible map
+isEquiv : forall A, B. (f : A -> B) -> Type
+isEquiv f = ((g : B -> A ** (f . g ~~ id {a = B})), (h : B -> A ** (h . f ~~ id {a = A})))
+
+qinvToEquiv : forall A, B. (f : A -> B) -> qinv f -> isEquiv f
+qinvToEquiv f (g ** (alpha, beta)) = ?qte -- ((g ** alpha), (g ** beta))
+
+equivToQinv : forall A, B. (f : A -> B) -> isEquiv f -> qinv f
+equivToQinv f ((g ** alpha), (h ** beta)) =
+  let gamma : g ~~ h
+      gamma x = invert (beta (g x)) <> ap h (alpha x)
+      beta' : g . f ~~ id {a = A}
+      beta' x = gamma (f x) <> beta x
+  in (g ** (?etq {- alpha -}, beta'))
+
+
+-- Equivalence of two types: A ≃ B
+-- We will sometimes write f : A ≃ B for (f, e) : A ≃ B where f : A -> B,
+-- and g(a) for ((pr1 g) a) where g : A ≃ B.
+infix 5 =~=
+(=~=) : (A, B : Type) -> Type
+a =~= b = (f : a -> b ** isEquiv f)
+
+equiv_refl : forall A. A =~= A
+equiv_refl = (id ** ((id ** \x => Refl), (id ** \x => ?eqr {- Refl -})))
+
+equiv_sym : forall A, B. A =~= B -> B =~= A
+equiv_sym (f ** e) =
+  let q@(finv ** eqinv) = equivToQinv f e
+      einv = qinvToEquiv f q
+  in (finv ** ?eqs {- einv -})
+
+equiv_trans : forall A, B, C. A =~= B -> B =~= C -> A =~= C
+equiv_trans (f ** a) (g ** b) =
+  let (finv ** (ffinv, finvf)) = equivToQinv f a
+      (ginv ** (gginv, ginvg)) = equivToQinv g b
+      --gffginv : (c : C) -> g (f (finv (ginv c))) = c
+      gffginv = \c => ap g (ffinv (ginv c)) <> gginv c
+      --fginvgf : (a : A) -> finv (ginv (g (f a))) = a
+      fginvgf = \a => ap finv (ginvg (f a)) <> finvf a
+      --abinv = qinvToEquiv (g . f) (finv . ginv ** (gffginv, fginvgf))
+  in (g . f ** ?abinv)
