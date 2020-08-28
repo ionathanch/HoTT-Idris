@@ -113,11 +113,11 @@ whiskl q beta =
 -}
 
 
--- Loop space of a point in a type
+-- Definition: Loop space of a point in a type
 Omega : (A : Type) -> (a : A) -> Type
 Omega _ a = a =:= a
 
--- Loop space of a loop space of a point
+-- Definition: Loop space of a loop space of a point
 Omega2 : (A : Type) -> (a : A) -> Type
 Omega2 _ a = Refl {x = a} =:= Refl {x = a}
 
@@ -240,11 +240,12 @@ transport_commute ptype qtype f p u =
       D x y p = (u : ptype x) -> transport qtype p (f x u) =:= f y (transport ptype p u)
   in J D (\_, _ => Refl) p u
 
--------------------------------------
----- HOMOTOPIES and EQUIVALENCES ----
--------------------------------------
+--------------------
+---- HOMOTOPIES ----
+--------------------
 
--- Homotopy, i.e. extensionality
+-- Definition: Homotopy, i.e. extensionality
+-- f ~ g := ∀(x : A), f x = g x
 infix 5 ~~
 (~~) : forall A, P. (f, g : (x : A) -> P x) -> Type
 f ~~ g = (x : A) -> f x =:= g x
@@ -310,6 +311,26 @@ hom_commute hom a =
   in cancel_left <> whisked <> cancel_right
 
 
+----------------------
+---- EQUIVALENCES ----
+----------------------
+
+{-
+  A quasi-inverse is the inverse usually associated with isomorphisms.
+  The quasi-inverse of a function f is a function g such that
+    f ∘ g ~ id and g ∘ f ~ id.
+  Then we would usually say that A and B are isomorphic if there exist
+  a mapping f : A -> B with a quasi-inverse (qinv f) : B -> A such that
+  the above homotopies hold.
+  
+  An equivalence is defined in terms of quasi-inverses, and given some
+  function f : A -> B, it must satisfy the following conditions:
+      (i) qinv f -> isEquiv f
+     (ii) isEquiv f -> qinv f
+    (iii) (e1, e2 : isEquiv f) -> e1 = e2
+  In this section we use the bi-invertible map as our equivalence.
+-}
+
 {-
   Technical note: Unification involving dependent pairs seems to be broken
   (see https://github.com/idris-lang/Idris2/issues/589);
@@ -317,56 +338,75 @@ hom_commute hom a =
   and replaced with holes for now.
 -}
 
-
--- The quasi-inverse of f is a function g such that
--- f · g ~ id and g · f ~ id
+-- Definition: Quasi-inverse
+-- qinv(f) := ∃(q : B -> A) s.t. (f ∘ g ~ id) ∧ (g ∘ f ~ id)
 qinv : forall A, B. (f : A -> B) -> Type
-qinv f = (g : B -> A ** (f . g ~~ id {a = B}, g . f ~~ id {a = A}))
+qinv f = (g : B -> A ** (g . f ~~ id {a = A}, f . g ~~ id {a = B}))
 
--- The quasi-inverse of id is id
+-- Example: The quasi-inverse of id is id
 qinv_ident : forall A. qinv (id {a = A})
-qinv_ident = MkDPair id (\x => ?qid {- Refl -}, \x => Refl)
+qinv_ident = MkDPair id (\x => Refl, \x => ?qid {- Refl -})
 
 
--- Proof of equivalence defined as a bi-invertible map
-isEquiv : forall A, B. (f : A -> B) -> Type
-isEquiv f = ((g : B -> A ** (f . g ~~ id {a = B})), (h : B -> A ** (h . f ~~ id {a = A})))
+-- Definition: Left inverse
+-- linv(f) := ∃(g : B -> A) s.t. g ∘ f ~ id
+linv : forall A, B. (f : A -> B) -> Type
+linv f = (g : B -> A ** (g . f ~~ id {a = A}))
 
-qinvToEquiv : forall A, B. (f : A -> B) -> qinv f -> isEquiv f
-qinvToEquiv f (g ** (alpha, beta)) = ?qte -- ((g ** alpha), (g ** beta))
+-- Definition: Right inverse
+-- rinv(f) := ∃(h : B -> A) s.t. f ∘ h ~ id
+rinv : forall A, B. (f : A -> B) -> Type
+rinv f = (h : B -> A ** (f . h ~~ id {a = B}))
 
-equivToQinv : forall A, B. (f : A -> B) -> isEquiv f -> qinv f
-equivToQinv f ((g ** alpha), (h ** beta)) =
-  let gamma : g ~~ h
-      gamma x = invert (beta (g x)) <> ap h (alpha x)
-      beta' : g . f ~~ id {a = A}
-      beta' x = gamma (f x) <> beta x
-  in (g ** (?etq {- alpha -}, beta'))
+-- Definition: Bi-invertible map
+-- biinv(f) := linv(f) ∧ rinv(f)
+biinv : forall A, B. (f : A -> B) -> Type
+biinv f = (linv f, rinv f)
+
+-- (i) qinv f -> biinv f
+qinvToBiinv : forall A, B. (f : A -> B) -> qinv f -> biinv f
+qinvToBiinv f (g ** (alpha, beta)) = ((g ** alpha), (g ** ?qte {- beta -}))
+
+-- (ii) biinv f -> qinv f
+biinvToQinv : forall A, B. (f : A -> B) -> biinv f -> qinv f
+biinvToQinv f ((g ** alpha), (h ** beta)) =
+  let gamma : h ~~ g
+      gamma x = invert (alpha (h x)) <> ap g (beta x)
+      alpha' : h . f ~~ id {a = A}
+      alpha' x = gamma (f x) <> alpha x
+  in (h ** (alpha', ?etq {- beta -}))
+
+-- (iii) (e1, e2 : biinv f) -> e1 = e2
+-- We cannot prove this just yet
 
 
--- Equivalence of two types: A ≃ B
+-- Definition: Equivalence of two types, A ≃ B
+-- For now, we define equivalence as a bi-invertible map
 -- We will sometimes write f : A ≃ B for (f, e) : A ≃ B where f : A -> B,
--- and g(a) for ((pr1 g) a) where g : A ≃ B.
+-- and g(a) for ((pr1 g) a) where g : A ≃ B
 infix 5 =~=
 (=~=) : (A, B : Type) -> Type
-a =~= b = (f : a -> b ** isEquiv f)
+a =~= b = (f : a -> b ** biinv f)
 
+-- Reflexivity: A ≃ A
 equiv_refl : forall A. A =~= A
 equiv_refl = (id ** ((id ** \x => Refl), (id ** \x => ?eqr {- Refl -})))
 
+-- Symmetry: If A ≃ B then B ≃ A
 equiv_sym : forall A, B. A =~= B -> B =~= A
 equiv_sym (f ** e) =
-  let q@(finv ** eqinv) = equivToQinv f e
-      einv = qinvToEquiv f q
+  let q@(finv ** eqinv) = biinvToQinv f e
+      einv = qinvToBiinv f q
   in (finv ** ?eqs {- einv -})
 
+-- Transitivity: If A ≃ B and B ≃ C then A ≃ C
 equiv_trans : forall A, B, C. A =~= B -> B =~= C -> A =~= C
 equiv_trans (f ** a) (g ** b) =
-  let (finv ** (ffinv, finvf)) = equivToQinv f a
-      (ginv ** (gginv, ginvg)) = equivToQinv g b
-      --gffginv : (c : C) -> g (f (finv (ginv c))) = c
+  let (finv ** (finvf, ffinv)) = biinvToQinv f a
+      (ginv ** (ginvg, gginv)) = biinvToQinv g b
+      --gffginv : (c : C) -> g (f (finv (ginv c))) =:= c
       gffginv = \c => ap g (ffinv (ginv c)) <> gginv c
-      --fginvgf : (a : A) -> finv (ginv (g (f a))) = a
+      --fginvgf : (a : A) -> finv (ginv (g (f a))) =:= a
       fginvgf = \a => ap finv (ginvg (f a)) <> finvf a
-      --abinv = qinvToEquiv (g . f) (finv . ginv ** (gffginv, fginvgf))
-  in (g . f ** ?abinv)
+      abinv = qinvToBiinv (g . f) (finv . ginv ** (fginvgf, ?gfrinv {- gffginv -}))
+  in (g . f ** ?eqt {- abinv -})
