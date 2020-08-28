@@ -309,3 +309,35 @@ hom_commute hom a =
           hid : ap f (hom a) <> Refl =:= ap f (hom a)
           hid = invert (rightId (ap f (hom a)))
   in cancel_left <> whisked <> cancel_right
+
+-------------------------------------
+---- NON-DEPENDENT PRODUCT TYPES ----
+-------------------------------------
+
+prodId_pr1 : forall A, B. {x, y : (A, B)} -> x =:= y -> fst x =:= fst y
+prodId_pr1 refl = ap fst refl
+
+prodId_pr2 : forall A, B. {x, y : (A, B)} -> x =:= y -> snd x =:= snd y
+prodId_pr2 refl = ap snd refl
+
+prodId : forall A, B. {x, y : (A, B)} -> (fst x =:= fst y, snd x =:= snd y) -> x =:= y
+prodId {x = (a, b)} {y = (a', b')} (p, q) =
+  let aa' = J (\a, a', p => (a, b) =:= (a', b)) (\_ => Refl) p
+      bb' = J (\b, b', q => (a', b) =:= (a', b')) (\_ => Refl) q
+  in aa' <> bb'
+
+prodId_comp1 : forall A, B. {x, y : (A, B)} -> (p : fst x =:= fst y) -> (q : snd x =:= snd y) ->
+  prodId_pr1 (prodId {x} {y} (p, q)) =:= p
+prodId_comp1 {x = (a, b)} {y = (a', b')} p q = ?pic1
+
+prodId_comp2 : forall A, B. {x, y : (A, B)} -> (p : fst x =:= fst y) -> (q : snd x =:= snd y) ->
+  prodId_pr2 (prodId {x} {y} (p, q)) =:= q
+prodId_comp2 {x = (a, b)} {y = (a', b')} p q = ?pic2
+
+prodId_uniq : forall A, B. {x, y : (A, B)} -> (r : x =:= y) -> r =:= prodId (prodId_pr1 r, prodId_pr2 r)
+prodId_uniq {x = (a, b)} {y = (a', b')} r =
+  let D : Dtype (A, B)
+      D x y r = r =:= prodId (prodId_pr1 r, prodId_pr2 r)
+      d : (ab : (A, B)) -> Refl =:= prodId {x = ab} {y = ab} (Refl, Refl)
+      d (a, b) = Refl
+  in J D d r
