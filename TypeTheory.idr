@@ -173,7 +173,6 @@ rec_id _ x x Refl cx = cx
 -- then C(x, y) holds when x === y.
 -- C(x, y) may also depend on the path from x to y, but to prove
 -- induction we only need to consider when the path is x === x.
-export
 ind_id : (C : (x : a) -> (y : a) -> x === y -> Type) ->
   (c : (x : a) -> C x x Refl) ->
   (x, y : a) -> (p : x === y) -> C x y p

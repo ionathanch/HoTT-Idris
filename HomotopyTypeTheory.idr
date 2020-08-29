@@ -314,30 +314,100 @@ hom_commute hom a =
 ---- NON-DEPENDENT PRODUCT TYPES ----
 -------------------------------------
 
-prodId_pr1 : forall A, B. {x, y : (A, B)} -> x =:= y -> fst x =:= fst y
-prodId_pr1 refl = ap fst refl
-
-prodId_pr2 : forall A, B. {x, y : (A, B)} -> x =:= y -> snd x =:= snd y
-prodId_pr2 refl = ap snd refl
-
+-- "Introduction rule": a = a' ∧ b = b' -> (a, b) = (a', b')
 prodId : forall A, B. {x, y : (A, B)} -> (fst x =:= fst y, snd x =:= snd y) -> x =:= y
 prodId {x = (a, b)} {y = (a', b')} (p, q) =
   let aa' = J (\a, a', p => (a, b) =:= (a', b)) (\_ => Refl) p
       bb' = J (\b, b', q => (a', b) =:= (a', b')) (\_ => Refl) q
   in aa' <> bb'
 
+-- "Elimination rule": (a, b) = (a', b') -> a = a'
+prodId_pr1 : forall A, B. {x, y : (A, B)} -> x =:= y -> fst x =:= fst y
+prodId_pr1 refl = ap fst refl
+
+-- "Elimination rule": (a, b) = (a', b') -> b = b'
+prodId_pr2 : forall A, B. {x, y : (A, B)} -> x =:= y -> snd x =:= snd y
+prodId_pr2 refl = ap snd refl
+
+-- "Computation rule": prodId_pr1 (prodId (p, q)) = p
 prodId_comp1 : forall A, B. {x, y : (A, B)} -> (p : fst x =:= fst y) -> (q : snd x =:= snd y) ->
   prodId_pr1 (prodId {x} {y} (p, q)) =:= p
-prodId_comp1 {x = (a, b)} {y = (a', b')} p q = ?pic1
+prodId_comp1 {x = (a, b)} {y = (a', b')} p q =
+  let D : Dtype A
+      D a a' p = (q : b =:= b') -> prodId_pr1 (prodId {x = (a, b)} {y = (a', b')} (p, q)) =:= p
+      d : (a : A) -> D a a Refl
+      d a q =
+        let D' : Dtype B
+            D' b b' q = prodId_pr1 (prodId {x = (a, b)} {y = (a, b')} (Refl, q)) =:= Refl
+        in J D' (\_ => Refl) q
+  in J D d p q
 
+-- "Computation rule": prodId_pr2 (prodId (p ∧ q)) = q
 prodId_comp2 : forall A, B. {x, y : (A, B)} -> (p : fst x =:= fst y) -> (q : snd x =:= snd y) ->
   prodId_pr2 (prodId {x} {y} (p, q)) =:= q
-prodId_comp2 {x = (a, b)} {y = (a', b')} p q = ?pic2
+prodId_comp2 {x = (a, b)} {y = (a', b')} p q =
+  let D : Dtype B
+      D b b' q = (p : a =:= a') -> prodId_pr2 (prodId {x = (a, b)} {y = (a', b')} (p, q)) =:= q
+      d : (b : B) -> D b b Refl
+      d b p =
+        let D' : Dtype A
+            D' a a' p = prodId_pr2 (prodId {x = (a, b)} {y = (a', b)} (p, Refl)) =:= Refl
+        in J D' (\_ => Refl) p
+  in J D d q p
 
+-- "Uniqueness principle": r = prodId (prodId_pr1 r ∧ prodId_pr2 r)
 prodId_uniq : forall A, B. {x, y : (A, B)} -> (r : x =:= y) -> r =:= prodId (prodId_pr1 r, prodId_pr2 r)
 prodId_uniq {x = (a, b)} {y = (a', b')} r =
   let D : Dtype (A, B)
       D x y r = r =:= prodId (prodId_pr1 r, prodId_pr2 r)
-      d : (ab : (A, B)) -> Refl =:= prodId {x = ab} {y = ab} (Refl, Refl)
-      d (a, b) = Refl
-  in J D d r
+  in J D (\(_, _) => Refl) r
+
+
+-- Reflexivity: Refl {z} = prodId (Refl {fst z} ∧ Refl {snd z})
+-- Alternatively, prodId_pr1 (Refl {z}) = Refl {fst z} and prodId_pr2 (Refl {z}) = Refl {snd z}
+prodId_refl : forall A, B. {z : (A, B)} -> Refl =:= prodId {x = z} {y = z} (Refl, Refl)
+prodId_refl {z = (a, b)} = Refl
+
+-- Symmetry : r⁻¹ = prodId ((prodId_pr1 r)⁻¹ ∧ (prodId_pr2 r)⁻¹)
+-- Alternatively, prodId (p⁻¹ ∧ q⁻¹) = (prodId (p ∧ q))⁻¹
+prodId_sym : forall A, B. {x, y : (A, B)} -> (r : x =:= y) -> invert r =:= prodId (invert (prodId_pr1 r), invert (prodId_pr2 r))
+prodId_sym {x = (a, b)} {y = (a', b')} r =
+  let D : Dtype (A, B)
+      D x y r = invert r =:= prodId (invert (prodId_pr1 r), invert (prodId_pr2 r))
+  in J D (\(_, _) => Refl) r
+
+-- Transitivity: p · q = prodId (prodId_pr1 p · prodId_pr1 q ∧ prodId_pr2 p · prodId_pr2 q)
+-- Alternatively, prodId (p · q ∧ p' · q') = prodId (p ∧ p') · prodId (q ∧ q')
+prodId_trans : forall A, B. {x, y, z : (A, B)} -> (p : x =:= y) -> (q : y =:= z) ->
+  p <> q =:= prodId (prodId_pr1 p <> prodId_pr1 q, prodId_pr2 p <> prodId_pr2 q)
+prodId_trans {x = (a, b)} {y = (a', b')} {z = (a'', b'')} p q =
+  let D : Dtype (A, B)
+      D x y p = {z : (A, B)} -> (q : y =:= z) -> p <> q =:= prodId (prodId_pr1 p <> prodId_pr1 q, prodId_pr2 p <> prodId_pr2 q)
+      d : (z : (A, B)) -> D z z Refl
+      d (_, _) q =
+        let D' : Dtype (A, B)
+            D' y z q = Refl <> q =:= prodId (prodId_pr1 Refl <> prodId_pr1 q, prodId_pr2 Refl <> prodId_pr2 q)
+        in J D' (\(_, _) => Refl) q
+  in J D d p q
+
+
+-- p[(A _, B _)]* x = (p[A] (fst x), p[B] (snd x))
+transport_prod : forall Z. {A, B : Z -> Type} -> {z, w : Z} -> (p : z =:= w) -> (x : (A z, B z)) ->
+  transport (\z => (A z, B z)) p x =:= (transport A p (fst x), transport B p (snd x))
+transport_prod p x =
+  let D : Dtype Z
+      D z w p = (x : (A z, B z)) -> transport (\z => (A z, B z)) p x =:= (transport A p (fst x), transport B p (snd x))
+  in J D (\_, (_, _) => Refl) p x
+
+-- ap (g (fst _), h (snd _)) (prodId (p ∧ q)) = prodId (g(p), h(q))
+ap_prod : forall A, B, A', B'. (g : A -> A') -> (h : B -> B') -> {x, y : (A, B)} -> (p : fst x = fst y) -> (q : snd x = snd y) ->
+  ap (\x => (g (fst x), h (snd x))) (prodId {x} {y} (p, q)) =:= prodId (ap g p, ap h q)
+ap_prod g h {x = (a, b)} {y = (a', b')} p q =
+  let D : Dtype A
+      D a a' p = (q : b =:= b') -> ap (\x => (g (fst x), h (snd x))) (prodId {x = (a, b)} {y = (a', b')} (p, q)) =:= prodId (ap g p, ap h q)
+      d : (a : A) -> D a a Refl
+      d a q =
+        let D' : Dtype B
+            D' b b' q = ap (\x => (g (fst x), h (snd x))) (prodId {x = (a, b)} {y = (a, b')} (Refl, q)) =:= prodId (Refl, ap h q)
+        in J D' (\_ => Refl) q
+  in J D d p q
