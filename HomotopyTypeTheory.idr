@@ -9,6 +9,8 @@
     with the exception of transport and transportConst.
 -}
 
+%default total
+
 -- Redefine homogenous equality with a lower infixity
 -- so that it binds /less/ tightly than <>
 infix 8 =:=

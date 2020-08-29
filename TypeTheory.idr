@@ -6,6 +6,8 @@
   build them up ourselves -- or rather, use Idris' Prelude definitions.
 -}
 
+%default total
+
 -----------------------
 ---- PRODUCT TYPES ----
 -----------------------

@@ -6,12 +6,7 @@
 
 import HomotopyTypeTheory
 
-{-
-  Technical note: Unification involving dependent pairs seems to be broken
-  (see https://github.com/idris-lang/Idris2/issues/589);
-  the terms that cause unification errors below have been commented out
-  and replaced with holes for now.
--}
+%default total
 
 ------------------------
 ---- QUASI-INVERSES ----
@@ -40,7 +35,7 @@ qinv f = (g : B -> A ** (g . f ~~ id {a = A}, f . g ~~ id {a = B}))
 
 -- Example: The quasi-inverse of id is id
 qinv_ident : forall A. qinv (id {a = A})
-qinv_ident = MkDPair id (\x => Refl, \x => ?qid {- Refl -})
+qinv_ident = MkDPair {a = A -> A} id (\x => Refl, \x => Refl)
 
 ----------------------------
 ---- BI-INVERTIBLE MAPS ----
@@ -63,7 +58,7 @@ biinv f = (linv f, rinv f)
 
 -- (i) qinv f -> biinv f
 qinvToBiinv : forall A, B. (f : A -> B) -> qinv f -> biinv f
-qinvToBiinv f (g ** (alpha, beta)) = ((g ** alpha), (g ** ?qte {- beta -}))
+qinvToBiinv f (g ** (alpha, beta)) = (MkDPair {a = B -> A} g alpha, MkDPair {a = B -> A} g beta)
 
 -- (ii) biinv f -> qinv f
 biinvToQinv : forall A, B. (f : A -> B) -> biinv f -> qinv f
@@ -72,7 +67,7 @@ biinvToQinv f ((g ** alpha), (h ** beta)) =
       gamma x = invert (alpha (h x)) <> ap g (beta x)
       alpha' : h . f ~~ id {a = A}
       alpha' x = gamma (f x) <> alpha x
-  in (h ** (alpha', ?etq {- beta -}))
+  in MkDPair {a = B -> A} h (alpha', beta)
 
 -- (iii) (e1, e2 : biinv f) -> e1 = e2
 -- We cannot prove this just yet
@@ -88,23 +83,21 @@ a =~= b = (f : a -> b ** biinv f)
 
 -- Reflexivity: A ≃ A
 equiv_refl : forall A. A =~= A
-equiv_refl = (id ** ((id ** \x => Refl), (id ** \x => ?eqr {- Refl -})))
+equiv_refl = MkDPair {a = A -> A} id (MkDPair {a = A -> A} id (\_ => Refl), MkDPair {a = A -> A} id (\_ => Refl))
 
 -- Symmetry: If A ≃ B then B ≃ A
 equiv_sym : forall A, B. A =~= B -> B =~= A
 equiv_sym (f ** e) =
-  let q@(finv ** eqinv) = biinvToQinv f e
-      einv = qinvToBiinv f q
-  in (finv ** ?eqs {- einv -})
+  let (finv ** (alpha, beta)) = biinvToQinv f e
+      einv = qinvToBiinv finv (MkDPair {a = A -> B} f (beta, alpha))
+  in MkDPair {a = B -> A} finv einv
 
 -- Transitivity: If A ≃ B and B ≃ C then A ≃ C
 equiv_trans : forall A, B, C. A =~= B -> B =~= C -> A =~= C
 equiv_trans (f ** a) (g ** b) =
   let (finv ** (finvf, ffinv)) = biinvToQinv f a
       (ginv ** (ginvg, gginv)) = biinvToQinv g b
-      --gffginv : (c : C) -> g (f (finv (ginv c))) =:= c
       gffginv = \c => ap g (ffinv (ginv c)) <> gginv c
-      --fginvgf : (a : A) -> finv (ginv (g (f a))) =:= a
       fginvgf = \a => ap finv (ginvg (f a)) <> finvf a
-      abinv = qinvToBiinv (g . f) (finv . ginv ** (fginvgf, ?gfrinv {- gffginv -}))
-  in (g . f ** ?eqt {- abinv -})
+      abinv = qinvToBiinv (g . f) (MkDPair {a = C -> A} (finv . ginv) (fginvgf, gffginv))
+  in MkDPair {a = A -> C} (g . f) abinv
