@@ -2,11 +2,11 @@
   Chapter 2: Homotopy Type Theory
 
   Conventions on implicit arguments:
-  * Endpoints of a path or sections of a homotopy will be implicit,
+  * Endpoints of a path or sections of a homotopy are implicit,
     e.g. {x, y : A} -> x =:= y or {f, g : (x : A) -> P x} -> f ~~ g.
     The only exception is the definition of Dtype.
-  * In lift and apd only, the type family P is implicit.
-    This is for consistency with the book.
+  * Type parameters and type families are implicit,
+    with the exception of transport and transportConst.
 -}
 
 -- Redefine homogenous equality with a lower infixity
@@ -209,35 +209,35 @@ transportConst btype p b = J (\_, _, p => transport (\_ => btype) p b =:= b) (\_
 -- f(p) = transportConst B p (f x) · f(p)
 -- That is, dependently applying a nondependent function to a path
 -- yields the same thing as nondependently applying the function
-apd_nondep : forall A. (B : Type) -> (f : A -> B) -> {x, y : A} -> (p : x =:= y) ->
+apd_nondep : forall A. {B : Type} -> (f : A -> B) -> {x, y : A} -> (p : x =:= y) ->
   apd f p =:= transportConst B p (f x) <> ap f p
-apd_nondep btype f p =
+apd_nondep f p =
   let D : Dtype A
-      D x y p = apd f p =:= transportConst btype p (f x) <> ap f p
+      D x y p = apd f p =:= transportConst B p (f x) <> ap f p
   in J D (\_ => Refl) p
 
 -- q* (p* u) = (p <> q)* u
-transport_distrib : forall A. (P : A -> Type) -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) -> (u : P x) ->
+transport_distrib : forall A. {P : A -> Type} -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) -> (u : P x) ->
   transport P q (transport P p u) =:= transport P (p <> q) u
-transport_distrib ptype p q u =
+transport_distrib p q u =
   let D : Dtype A
-      D x y p = {z : A} -> (q : y =:= z) -> (u : ptype x) -> transport ptype q (transport ptype p u) =:= transport ptype (p <> q) u
+      D x y p = {z : A} -> (q : y =:= z) -> (u : P x) -> transport P q (transport P p u) =:= transport P (p <> q) u
   in J D (\_, _, _ => Refl) p q u
 
 -- p[P ∘ f]* u = f(p)[P]* u
-transport_ap : forall A, B. (f : A -> B) -> (P : B -> Type) -> {x, y : A} -> (p : x =:= y) -> (u : P (f x)) ->
+transport_ap : forall A, B. (f : A -> B) -> {P : B -> Type} -> {x, y : A} -> (p : x =:= y) -> (u : P (f x)) ->
   transport (P . f) p u =:= transport P (ap f p) u
-transport_ap f ptype p u =
+transport_ap f p u =
   let D : Dtype A
-      D x y p = (u : ptype (f x)) -> transport (ptype . f) p u =:= transport ptype (ap f p) u
+      D x y p = (u : P (f x)) -> transport (P . f) p u =:= transport P (ap f p) u
   in J D (\_, _ => Refl) p u
 
 -- p[Q]* (f x u) = f y (p[P]* u)
-transport_commute : forall A. (P, Q : A -> Type) -> (f : (a : A) -> P a -> Q a) -> {x, y : A} -> (p : x =:= y) -> (u : P x) ->
+transport_commute : forall A. {P, Q : A -> Type} -> (f : (a : A) -> P a -> Q a) -> {x, y : A} -> (p : x =:= y) -> (u : P x) ->
   transport Q p (f x u) =:= f y (transport P p u)
-transport_commute ptype qtype f p u =
+transport_commute f p u =
   let D : Dtype A
-      D x y p = (u : ptype x) -> transport qtype p (f x u) =:= f y (transport ptype p u)
+      D x y p = (u : P x) -> transport Q p (f x u) =:= f y (transport P p u)
   in J D (\_, _ => Refl) p u
 
 --------------------
