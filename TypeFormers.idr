@@ -50,9 +50,9 @@ prodId_pr : forall A, B. {x, y : (A, B)} -> x =:= y -> (fst x =:= fst y, snd x =
 prodId_pr p = (prodId_pr1 p, prodId_pr2 p)
 
 -- "Computation rule" [fst]: prodId_pr1 (prodId (p ∧ q)) = p
-prodId_comp1 : forall A, B. {x, y : (A, B)} -> (p : fst x =:= fst y) -> (q : snd x =:= snd y) ->
-  prodId_pr1 (prodId {x} {y} (p, q)) =:= p
-prodId_comp1 {x = (a, b)} {y = (a', b')} p q =
+prodId_comp1 : forall A, B. {x, y : (A, B)} -> (pq : (fst x =:= fst y, snd x =:= snd y)) ->
+  prodId_pr1 (prodId {x} {y} pq) =:= fst pq
+prodId_comp1 {x = (a, b)} {y = (a', b')} (p, q) =
   let D : Dtype A
       D a a' p = (q : b =:= b') -> prodId_pr1 (prodId {x = (a, b)} {y = (a', b')} (p, q)) =:= p
       d : (a : A) -> D a a Refl
@@ -63,9 +63,9 @@ prodId_comp1 {x = (a, b)} {y = (a', b')} p q =
   in J D d p q
 
 -- "Computation rule" [snd]: prodId_pr2 (prodId (p ∧ q)) = q
-prodId_comp2 : forall A, B. {x, y : (A, B)} -> (p : fst x =:= fst y) -> (q : snd x =:= snd y) ->
-  prodId_pr2 (prodId {x} {y} (p, q)) =:= q
-prodId_comp2 {x = (a, b)} {y = (a', b')} p q =
+prodId_comp2 : forall A, B. {x, y : (A, B)} -> (pq : (fst x =:= fst y, snd x =:= snd y)) ->
+  prodId_pr2 (prodId {x} {y} pq) =:= snd pq
+prodId_comp2 {x = (a, b)} {y = (a', b')} (p, q) =
   let D : Dtype B
       D b b' q = (p : a =:= a') -> prodId_pr2 (prodId {x = (a, b)} {y = (a', b')} (p, q)) =:= q
       d : (b : B) -> D b b Refl
@@ -76,11 +76,11 @@ prodId_comp2 {x = (a, b)} {y = (a', b')} p q =
   in J D d q p
 
 -- "Computation rule": prodId_pr (prodId (p ∧ q)) = (p ∧ q)
-prodId_comp : forall A, B. {x, y : (A, B)} -> (p : fst x =:= fst y) -> (q : snd x =:= snd y) ->
-  prodId_pr (prodId {x} {y} (p, q)) =:= (p, q)
-prodId_comp {x = (a, b)} {y = (a', b')} p q =
-  let comp1 = prodId_comp1 {x = (a, b)} {y = (a', b')} p q
-      comp2 = prodId_comp2 {x = (a, b)} {y = (a', b')} p q
+prodId_comp : forall A, B. {x, y : (A, B)} -> (pq : (fst x =:= fst y, snd x =:= snd y)) ->
+  prodId_pr (prodId {x} {y} pq) =:= pq
+prodId_comp {x = (a, b)} {y = (a', b')} pq =
+  let comp1 = prodId_comp1 {x = (a, b)} {y = (a', b')} pq
+      comp2 = prodId_comp2 {x = (a, b)} {y = (a', b')} pq
   in prodId (comp1, comp2)
 
 -- "Uniqueness principle": prodId (prodId r) = r
@@ -89,6 +89,10 @@ prodId_uniq {x = (a, b)} {y = (a', b')} r =
   let D : Dtype (A, B)
       D x y r = prodId (prodId_pr r) =:= r
   in J D (\(_, _) => Refl) r
+
+-- prodId is a quasi-equivalence from (a = a', b = b') to (a, b) = (a', b')
+prodId_qinv : forall A, B. {x, y : (A, B)} -> qinv (prodId {x} {y})
+prodId_qinv = (prodId_pr ** (prodId_comp, prodId_uniq))
 
 
 -- Reflexivity: Refl {z} = prodId (Refl {fst z} ∧ Refl {snd z})
@@ -185,6 +189,10 @@ dprodId_uniq {w = (a ** b)} {w' = (a' ** b')} r =
   let D : Dtype (x : A ** P x)
       D x y r = dprodId (dprodId_pr r) =:= r
   in J D (\(_ ** _) => Refl) r
+
+-- dprodId is a quasi-equivalence from (a = a' ** b = b') to (a ** b) = (a' ** b')
+dprodId_qinv : forall A. {P : A -> Type} -> {w, w' : (x : A ** P x)} -> qinv (dprodId {w} {w'})
+dprodId_qinv = (dprodId_pr ** (dprodId_comp, dprodId_uniq))
 
 
 -- p[(u : P _ ** Q (_ ** u))]* w = (p[P]* (fst x) ** (dprodId (p ** Refl))[Q]* (snd x))

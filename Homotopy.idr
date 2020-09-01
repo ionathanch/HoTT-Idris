@@ -318,7 +318,7 @@ hom_commute hom a =
           hid : ap f (hom a) <> Refl =:= ap f (hom a)
           hid = invert (rightId (ap f (hom a)))
   in cancel_left <> whisked <> cancel_right
-  
+
 ------------------------
 ---- EQUIVALENCE ----
 ------------------------
@@ -330,7 +330,7 @@ hom_commute hom a =
   Then we would usually say that A and B are isomorphic if there exist
   a mapping f : A -> B with a quasi-inverse (qinv f) : B -> A such that
   the above homotopies hold.
-  For our purposes we will call f an equimorphism from A to B.
+  For our purposes we will call f an quasii-equivalence from A to B.
 
   An equivalence is defined in terms of quasi-inverses, and given some
   function f : A -> B, it must satisfy the following conditions:
@@ -339,8 +339,8 @@ hom_commute hom a =
     (iii) (e1, e2 : equiv f) -> e1 = e2
   We delay the definition of equivalences to the Equivalences file.
   Since to show that two types are equivalent it suffices to show that
-  there exists a quasi-invertible equimorphism, we will only show the
-  equivalence theorems presented in the book up to quasi-invertibility.
+  there exists a quasi-equivalence, we will only show the equivalence
+  theorems presented in the book up to quasi-invertibility.
 -}
 
 -- Definition: Quasi-inverse
