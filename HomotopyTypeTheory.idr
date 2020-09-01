@@ -451,7 +451,7 @@ dprodId_pr q =
       D w w' _ = (p : fst w =:= fst w' ** transport P p (snd w) =:= snd w')
   in J D (\_ => (Refl ** Refl)) q
 
--- "Computation rule": (dprodId_pr (dprodId (∃p. q))) = ∃p. q
+-- "Computation rule": (dprodId_pr (dprodId (p ** q))) = p ** q
 dprodId_comp : forall A. {P : A -> Type} -> {w, w' : (x : A ** P x)} ->
   (r : (p : fst w =:= fst w' ** transport P p (snd w) =:= snd w')) -> dprodId_pr (dprodId {w} {w'} r) =:= r
 dprodId_comp {w = (a ** b)} {w' = (a' ** b')} (p ** q) =
@@ -482,6 +482,10 @@ transport_dprod p w =
         transport (\z => (u : P z ** Q (z ** u))) p w =:= (transport P p (fst w) ** transport Q (dprodId (p ** Refl)) (snd w))
   in J D (\_, (_ ** _) => Refl) p w
 
-{- ap_dprod : forall A, A'. {P : A -> Type} -> {P' : A' -> Type} -> (g : A -> A') -> (h : forall a. P a -> P' (g a)) -> {w, w' : (a : A ** P a)} ->
-  (r : (p : fst w =:= fst w' ** transport P p (snd w) =:= snd w')) ->
-  ap (\w => (g (fst w) ** h (snd w))) (dprodId {w} {w'} r) =:= dprodId {P = P'} (ap g (fst r) ** ap h (snd r)) -}
+-- ap (g _ ** h _) p = dprodId (g(p) ** (transport_ap g p (h x))⁻¹ · h(p))
+ap_dprod : forall A, A'. {P : A' -> Type} -> (g : A -> A') -> (h : (a : A) -> P (g a)) -> {x, y : A} -> (p : x =:= y) ->
+  ap (\z => (g z ** h z)) p =:= dprodId {P} (ap g p ** invert (transport_ap g {P} p (h x)) <> apd h p)
+ap_dprod g h p =
+  let D : Dtype A
+      D x y p = ap (\z => (g z ** h z)) p =:= dprodId {P} (ap g p ** invert (transport_ap g {P} p (h x)) <> apd h p)
+  in J D (\_ => Refl) p
