@@ -56,7 +56,7 @@ pr2_dprod = ind_dprod (\a, b => b)
 -- Type-theoretic axiom of choice:
 -- If for every x there is a y such that R(x, y), then there is an f such that for every x, R(x, f(x))
 ac : forall a, b, r. ((x : a) -> (y : b ** r x y)) -> (f : a -> b ** (x : a) -> r x (f x))
--- ac g = (\x => pr1_dprod (g x) ** \x => pr2_dprod (g x))
+ac g = MkDPair {a = a -> b} (\x => pr1_dprod (g x)) (\x => pr2_dprod (g x))
 
 -- Example: Magmas
 magma : (a : Type ** a -> a -> a)

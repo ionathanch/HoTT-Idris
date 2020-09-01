@@ -22,9 +22,9 @@ import HomotopyTypeTheory
 
   An equivalence is defined in terms of quasi-inverses, and given some
   function f : A -> B, it must satisfy the following conditions:
-      (i) qinv f -> isEquiv f
-     (ii) isEquiv f -> qinv f
-    (iii) (e1, e2 : isEquiv f) -> e1 = e2
+      (i) qinv f -> equiv f
+     (ii) equiv f -> qinv f
+    (iii) (e1, e2 : equiv f) -> e1 = e2
   In this section we use the bi-invertible map as our equivalence.
 -}
 
@@ -52,24 +52,24 @@ rinv : forall A, B. (f : A -> B) -> Type
 rinv f = (h : B -> A ** (f . h ~~ id {a = B}))
 
 -- Definition: Bi-invertible map
--- biinv(f) := linv(f) ∧ rinv(f)
-biinv : forall A, B. (f : A -> B) -> Type
-biinv f = (linv f, rinv f)
+-- binv(f) := linv(f) ∧ rinv(f)
+binv : forall A, B. (f : A -> B) -> Type
+binv f = (linv f, rinv f)
 
--- (i) qinv f -> biinv f
-qinvToBiinv : forall A, B. (f : A -> B) -> qinv f -> biinv f
-qinvToBiinv f (g ** (alpha, beta)) = (MkDPair {a = B -> A} g alpha, MkDPair {a = B -> A} g beta)
+-- (i) qinv f -> binv f
+qinvToBinv : forall A, B. (f : A -> B) -> qinv f -> binv f
+qinvToBinv f (g ** (alpha, beta)) = (MkDPair {a = B -> A} g alpha, MkDPair {a = B -> A} g beta)
 
--- (ii) biinv f -> qinv f
-biinvToQinv : forall A, B. (f : A -> B) -> biinv f -> qinv f
-biinvToQinv f ((g ** alpha), (h ** beta)) =
+-- (ii) binv f -> qinv f
+binvToQinv : forall A, B. (f : A -> B) -> binv f -> qinv f
+binvToQinv f ((g ** alpha), (h ** beta)) =
   let gamma : h ~~ g
       gamma x = invert (alpha (h x)) <> ap g (beta x)
       alpha' : h . f ~~ id {a = A}
       alpha' x = gamma (f x) <> alpha x
   in MkDPair {a = B -> A} h (alpha', beta)
 
--- (iii) (e1, e2 : biinv f) -> e1 = e2
+-- (iii) (e1, e2 : binv f) -> e1 = e2
 -- We cannot prove this just yet
 
 
@@ -79,7 +79,7 @@ biinvToQinv f ((g ** alpha), (h ** beta)) =
 -- and g(a) for ((pr1 g) a) where g : A ≃ B
 infix 5 =~=
 (=~=) : (A, B : Type) -> Type
-a =~= b = (f : a -> b ** biinv f)
+a =~= b = (f : a -> b ** binv f)
 
 -- Reflexivity: A ≃ A
 equiv_refl : forall A. A =~= A
@@ -88,16 +88,16 @@ equiv_refl = MkDPair {a = A -> A} id (MkDPair {a = A -> A} id (\_ => Refl), MkDP
 -- Symmetry: If A ≃ B then B ≃ A
 equiv_sym : forall A, B. A =~= B -> B =~= A
 equiv_sym (f ** e) =
-  let (finv ** (alpha, beta)) = biinvToQinv f e
-      einv = qinvToBiinv finv (MkDPair {a = A -> B} f (beta, alpha))
+  let (finv ** (alpha, beta)) = binvToQinv f e
+      einv = qinvToBinv finv (MkDPair {a = A -> B} f (beta, alpha))
   in MkDPair {a = B -> A} finv einv
 
 -- Transitivity: If A ≃ B and B ≃ C then A ≃ C
 equiv_trans : forall A, B, C. A =~= B -> B =~= C -> A =~= C
 equiv_trans (f ** a) (g ** b) =
-  let (finv ** (finvf, ffinv)) = biinvToQinv f a
-      (ginv ** (ginvg, gginv)) = biinvToQinv g b
+  let (finv ** (finvf, ffinv)) = binvToQinv f a
+      (ginv ** (ginvg, gginv)) = binvToQinv g b
       gffginv = \c => ap g (ffinv (ginv c)) <> gginv c
       fginvgf = \a => ap finv (ginvg (f a)) <> finvf a
-      abinv = qinvToBiinv (g . f) (MkDPair {a = C -> A} (finv . ginv) (fginvgf, gffginv))
+      abinv = qinvToBinv (g . f) (MkDPair {a = C -> A} (finv . ginv) (fginvgf, gffginv))
   in MkDPair {a = A -> C} (g . f) abinv
