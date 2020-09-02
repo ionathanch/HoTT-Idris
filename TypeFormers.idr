@@ -237,6 +237,18 @@ unitId_uniq {x = ()} {y = ()} p =
 ---- FUNCTION TYPES ----
 ------------------------
 
+{-
+  The book defines that happly is a quasi-equivalence as the main axiom.
+  We instead only state the quasi-inverse funext as our axiom, as well as
+  the reflexivity property associated with it, which appears to be sufficient.
+  See this discussion on Zulip for an overview:
+  https://hott.zulipchat.com/#narrow/stream/228519-general/topic/Computation.20and.20uniqueness.20rules.20for.20function.20types
+
+  Later on, funext should be provable from univalence.
+  Once it has computational content, it is expected that fun_refl's type would compute,
+  and it would then have an easy proof (possibly simply \f => Refl).
+-}
+
 -- [AXIOM] Introduction rule: ∀x, f x = g x -> f = g
 -- This is functional extensionality and can be proven from univalence
 funext : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f ~~ g -> f =:= g
