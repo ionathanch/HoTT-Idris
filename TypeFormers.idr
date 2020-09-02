@@ -247,8 +247,6 @@ happly p = J {A = (x : A) -> B x} (\f, g, _ => f ~~ g) (\_, _ => Refl) p
 
 
 -- [AXIOM] Reflexivity: funext (\_ => Refl) = Refl
--- The book claims that this "follows from the definition of happly",
--- but I haven't thought up how to prove it yet
 fun_refl : forall A. {B : A -> Type} -> (f : (x : A) -> B x) -> funext {f = f} {g = f} (\_ => Refl) =:= Refl
 
 -- Symmetry: funext (\x => (happly p x)⁻¹) = p⁻¹
@@ -282,6 +280,46 @@ fun_comp h =
   in J D d (funext h) h
 
 -- Uniqueness principle: funext (happly h) = h
-fun_elim : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
+fun_uniq : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
   funext (happly p) =:= p
-fun_elim p = J {A = (x : A) -> B x} (\f, g, p => funext (happly p) =:= p) fun_refl p
+fun_uniq p = J {A = (x : A) -> B x} (\f, g, p => funext (happly p) =:= p) fun_refl p
+
+-- happly is a quasi-equivalence from f = g to f ~~ g
+fun_qinv : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> qinv (happly {f} {g})
+fun_qinv = (funext ** (fun_uniq, fun_comp))
+
+
+-- p[A _ -> B _]* f = (\x => p[B]* (f (p⁻¹[A]* x)))
+transport_fun : forall X. {A, B : X -> Type} -> {x1, x2 : X} -> (p : x1 =:= x2) -> (f : A x1 -> B x1) ->
+  transport (\x => A x -> B x) p f =:= (\x => transport B p (f (transport A (invert p) x)))
+transport_fun p f =
+  let D : Dtype X
+      D x1 x2 p = (f : A x1 -> B x1) -> transport (\x => A x -> B x) p f =:= (\x => transport B p (f (transport A (invert p) x)))
+  in J D (\_, _ => funext (\_ => Refl)) p f
+
+transport_dfun : forall X. {A : X -> Type} -> {B : (x : X) -> A x -> Type} -> {x1, x2 : X} ->
+  (p : x1 =:= x2) -> (f : (a : A x1) -> B x1 a) -> (a : A x2) ->
+  let AB : X -> Type
+      AB x = (a : A x) -> B x a
+      Bhat : (x : X ** A x) -> Type
+      Bhat w = B (fst w) (snd w)
+      a' : A x1
+      a' = transport A (invert p) a
+      q : (MkDPair {p = A} x1 a') =:= (MkDPair {p = A} x2 a)
+      q = invert (dprodId (invert p ** Refl))
+  in transport AB p f a =:= transport Bhat q (f a')
+transport_dfun p f a =
+  let D : Dtype X
+      D x1 x2 p = (f : (a : A x1) -> B x1 a) -> (a : A x2) ->
+        let AB : X -> Type
+            AB x = (a : A x) -> B x a
+            Bhat : (x : X ** A x) -> Type
+            Bhat w = B (fst w) (snd w)
+            a' : A x1
+            a' = transport A (invert p) a
+            q : (MkDPair {p = A} x1 a') =:= (MkDPair {p = A} x2 a)
+            q = invert (dprodId (invert p ** Refl))
+        in transport AB p f a =:= transport Bhat q (f a')
+      d : (x : X) -> D x x Refl
+      d x f a = Refl
+  in J D d p f a
