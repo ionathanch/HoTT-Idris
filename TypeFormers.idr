@@ -30,26 +30,26 @@ import Homotopy
 ---- NON-DEPENDENT PRODUCT TYPES ----
 -------------------------------------
 
--- "Introduction rule": a = a' ∧ b = b' -> (a, b) = (a', b')
+-- Introduction rule: a = a' ∧ b = b' -> (a, b) = (a', b')
 prodId : forall A, B. {x, y : (A, B)} -> (fst x =:= fst y, snd x =:= snd y) -> x =:= y
 prodId {x = (a, b)} {y = (a', b')} (p, q) =
   let aa' = J (\a, a', p => (a, b) =:= (a', b)) (\_ => Refl) p
       bb' = J (\b, b', q => (a', b) =:= (a', b')) (\_ => Refl) q
   in aa' <> bb'
 
--- "Elimination rule" [fst]: (a, b) = (a', b') -> a = a'
+-- Elimination rule [fst]: (a, b) = (a', b') -> a = a'
 prodId_pr1 : forall A, B. {x, y : (A, B)} -> x =:= y -> fst x =:= fst y
 prodId_pr1 p = ap fst p
 
--- "Elimination rule" [snd]: (a, b) = (a', b') -> b = b'
+-- Elimination rule [snd]: (a, b) = (a', b') -> b = b'
 prodId_pr2 : forall A, B. {x, y : (A, B)} -> x =:= y -> snd x =:= snd y
 prodId_pr2 p = ap snd p
 
--- "Elimination rule": (a, b) = (a', b') -> (a = a' ∧ b = b')
+-- Elimination rule: (a, b) = (a', b') -> (a = a' ∧ b = b')
 prodId_pr : forall A, B. {x, y : (A, B)} -> x =:= y -> (fst x =:= fst y, snd x =:= snd y)
 prodId_pr p = (prodId_pr1 p, prodId_pr2 p)
 
--- "Computation rule" [fst]: prodId_pr1 (prodId (p ∧ q)) = p
+-- Computation rule [fst]: prodId_pr1 (prodId (p ∧ q)) = p
 prodId_comp1 : forall A, B. {x, y : (A, B)} -> (pq : (fst x =:= fst y, snd x =:= snd y)) ->
   prodId_pr1 (prodId {x} {y} pq) =:= fst pq
 prodId_comp1 {x = (a, b)} {y = (a', b')} (p, q) =
@@ -62,7 +62,7 @@ prodId_comp1 {x = (a, b)} {y = (a', b')} (p, q) =
         in J D' (\_ => Refl) q
   in J D d p q
 
--- "Computation rule" [snd]: prodId_pr2 (prodId (p ∧ q)) = q
+-- Computation rule [snd]: prodId_pr2 (prodId (p ∧ q)) = q
 prodId_comp2 : forall A, B. {x, y : (A, B)} -> (pq : (fst x =:= fst y, snd x =:= snd y)) ->
   prodId_pr2 (prodId {x} {y} pq) =:= snd pq
 prodId_comp2 {x = (a, b)} {y = (a', b')} (p, q) =
@@ -75,7 +75,7 @@ prodId_comp2 {x = (a, b)} {y = (a', b')} (p, q) =
         in J D' (\_ => Refl) p
   in J D d q p
 
--- "Computation rule": prodId_pr (prodId (p ∧ q)) = (p ∧ q)
+-- Computation rule: prodId_pr (prodId (p ∧ q)) = (p ∧ q)
 prodId_comp : forall A, B. {x, y : (A, B)} -> (pq : (fst x =:= fst y, snd x =:= snd y)) ->
   prodId_pr (prodId {x} {y} pq) =:= pq
 prodId_comp {x = (a, b)} {y = (a', b')} pq =
@@ -83,7 +83,7 @@ prodId_comp {x = (a, b)} {y = (a', b')} pq =
       comp2 = prodId_comp2 {x = (a, b)} {y = (a', b')} pq
   in prodId (comp1, comp2)
 
--- "Uniqueness principle": prodId (prodId r) = r
+-- Uniqueness principle: prodId (prodId r) = r
 prodId_uniq : forall A, B. {x, y : (A, B)} -> (r : x =:= y) -> prodId (prodId_pr r) =:= r
 prodId_uniq {x = (a, b)} {y = (a', b')} r =
   let D : Dtype (A, B)
@@ -148,7 +148,7 @@ ap_prod g h {x = (a, b)} {y = (a', b')} p q =
 ---- DEPENDENT PRODUCT TYPES ----
 ---------------------------------
 
--- "Introduction rule": ∃(p : a = a') s.t. p*(b) = b' -> (a ** b) = (a' ** b')
+-- Introduction rule: ∃(p : a = a') s.t. p*(b) = b' -> (a ** b) = (a' ** b')
 dprodId : forall A. {P : A -> Type} -> {w, w' : (x : A ** P x)} ->
   (p : fst w =:= fst w' ** transport P p (snd w) =:= snd w') -> w =:= w'
 dprodId {w = (a ** b)} {w' = (a' ** b')} (p ** q) =
@@ -161,7 +161,7 @@ dprodId {w = (a ** b)} {w' = (a' ** b')} (p ** q) =
         in J D' (\_ => Refl) q
   in J D d p q
 
--- "Elimination rule": (a ** b) = (a' ** b') -> ∃(p : a = a') s.t. p*(b) = b'
+-- Elimination rule: (a ** b) = (a' ** b') -> ∃(p : a = a') s.t. p*(b) = b'
 dprodId_pr : forall A. {P : A -> Type} -> {w, w' : (x : A ** P x)} ->
   w =:= w' -> (p : fst w =:= fst w' ** transport P p (snd w) =:= snd w')
 dprodId_pr q =
@@ -169,7 +169,7 @@ dprodId_pr q =
       D w w' _ = (p : fst w =:= fst w' ** transport P p (snd w) =:= snd w')
   in J D (\_ => (Refl ** Refl)) q
 
--- "Computation rule": (dprodId_pr (dprodId (p ** q))) = p ** q
+-- Computation rule: (dprodId_pr (dprodId (p ** q))) = p ** q
 dprodId_comp : forall A. {P : A -> Type} -> {w, w' : (x : A ** P x)} ->
   (r : (p : fst w =:= fst w' ** transport P p (snd w) =:= snd w')) -> dprodId_pr (dprodId {w} {w'} r) =:= r
 dprodId_comp {w = (a ** b)} {w' = (a' ** b')} (p ** q) =
@@ -183,7 +183,7 @@ dprodId_comp {w = (a ** b)} {w' = (a' ** b')} (p ** q) =
         in J D' (\_ => Refl) q
   in J D d p q
 
--- "Uniqueness principle": dprodId (dprodId_pr r) = r
+-- Uniqueness principle: dprodId (dprodId_pr r) = r
 dprodId_uniq : forall A. {P : A -> Type} -> {w, w' : (x : A ** P x)} -> (r : w =:= w') -> dprodId (dprodId_pr r) =:= r
 dprodId_uniq {w = (a ** b)} {w' = (a' ** b')} r =
   let D : Dtype (x : A ** P x)
@@ -216,19 +216,72 @@ ap_dprod g h p =
 ---- UNIT TYPE ----
 -------------------
 
--- "Introduction rule": () -> () = ()
+-- Introduction rule: () -> () = ()
 unitId : {x, y : Unit} -> Unit -> x =:= y
 unitId {x = ()} {y = ()} () = Refl
 
--- "Elimination rule": () = () -> ()
+-- Elimination rule: () = () -> ()
 unitId_elim : {x, y : Unit} -> x =:= y -> Unit
 unitId_elim _ = ()
 
--- "Computation rule": unitId_elim (unitId ()) = ()
+-- Computation rule: unitId_elim (unitId ()) = ()
 unitId_comp : {u : Unit} -> unitId_elim (unitId u) = u
 unitId_comp {u = ()} = Refl
 
--- "Uniqueness principle": unitId (unitId_elim p) = p
+-- Uniqueness principle: unitId (unitId_elim p) = p
 unitId_uniq : {x, y : Unit} -> (p : x =:= y) -> unitId (unitId_elim p) = p
 unitId_uniq {x = ()} {y = ()} p =
   J (\(), (), p => unitId (unitId_elim p) = p) (\() => Refl) p
+
+------------------------
+---- FUNCTION TYPES ----
+------------------------
+
+-- [AXIOM] Introduction rule: ∀x, f x = g x -> f = g
+-- This is functional extensionality and can be proven from univalence
+funext : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f ~~ g -> f =:= g
+
+-- Elimination rule: f = g -> ∀x, f x = g x
+happly : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f = g -> f ~~ g
+happly p = J {A = (x : A) -> B x} (\f, g, _ => f ~~ g) (\_, _ => Refl) p
+
+
+-- [AXIOM] Reflexivity: funext (\_ => Refl) = Refl
+-- The book claims that this "follows from the definition of happly",
+-- but I haven't thought up how to prove it yet
+fun_refl : forall A. {B : A -> Type} -> (f : (x : A) -> B x) -> funext {f = f} {g = f} (\_ => Refl) =:= Refl
+
+-- Symmetry: funext (\x => (happly p x)⁻¹) = p⁻¹
+fun_sym : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
+  funext (\x => invert (happly p x)) =:= invert p
+fun_sym p =
+  J (\f, g, p => funext (\x => invert (happly {f} {g} p x)) =:= invert p) fun_refl p
+
+-- Transitivity: funext (\x => happly p x <> happly q x) = p <> q
+fun_trans : forall A. {B : A -> Type} -> {f, g, h : (x : A) -> B x} -> (p : f =:= g) -> (q : g =:= h) ->
+  funext (\x => happly p x <> happly q x) =:= p <> q
+fun_trans p q =
+  let D : Dtype ((x : A) -> B x)
+      D f g p = {h : (x : A) -> B x} -> (q : g =:= h) -> funext (\x => happly p x <> happly q x) =:= p <> q
+      d : (g : (x : A) -> B x) -> D g g Refl
+      d g q =
+        let D' : Dtype ((x : A) -> B x)
+            D' g h q = funext (\x => happly {f = g} {g = g} Refl x <> happly {f = g} {g = h} q x) =:= q
+        in J D' fun_refl q
+  in J D d p q
+
+
+-- Computation rule: happly (funext h) = h
+fun_comp : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (h : f ~~ g) ->
+  happly (funext h) =:= h
+fun_comp h =
+  let D : Dtype ((x : A) -> B x)
+      D f g p = (h : f ~~ g) -> happly (funext h) =:= h
+      d : (g : (x : A) -> B x) -> D g g Refl
+      d g (\_ => Refl) = ap happly (fun_refl g)
+  in J D d (funext h) h
+
+-- Uniqueness principle: funext (happly h) = h
+fun_elim : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
+  funext (happly p) =:= p
+fun_elim p = J {A = (x : A) -> B x} (\f, g, p => funext (happly p) =:= p) fun_refl p
