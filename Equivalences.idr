@@ -70,3 +70,7 @@ equiv_trans (f ** a) (g ** b) =
       fginvgf = \a => ap finv (ginvg (f a)) <> finvf a
       abinv = qinvToBinv (g . f) (MkDPair {a = C -> A} (finv . ginv) (fginvgf, gffginv))
   in MkDPair {a = A -> C} (g . f) abinv
+
+-- Transform a quasi-equivalence into an equivalence
+-- qeqToEquiv : forall A, B. A <~> B -> A =~= B
+qeqToEquiv ((f, g) ** (gf, fg)) = (f ** ((g ** gf), (g ** fg)))

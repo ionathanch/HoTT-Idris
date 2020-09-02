@@ -348,9 +348,24 @@ hom_commute hom a =
 qinv : forall A, B. (f : A -> B) -> Type
 qinv f = (g : B -> A ** (g . f ~~ id {a = A}, f . g ~~ id {a = B}))
 
+-- Definition: Quasi-equivalence
+-- A <~> B := ∃(f : A -> B) s.t. qinv(f)
+infix 4 <~>
+(<~>) : (A, B : Type) -> Type
+a <~> b = (fg : (a -> b, b -> a) ** ((snd fg) . (fst fg) ~~ id {a = a}, (fst fg) . (snd fg) ~~ id {a = b}))
+
+-- Get the "to" direction of the quasi-equivalence
+qeqTo : forall A, B. A <~> B -> (A -> B)
+qeqTo ((f, g) ** _) = f
+
+-- Get the "from" direction of the quasi-equivalence
+qeqFrom : forall A, B. A <~> B -> (B -> A)
+qeqFrom ((f, g) ** _) = g
+
 -- Example: The quasi-inverse of id is id
 qinv_ident : forall A. qinv (id {a = A})
 qinv_ident = MkDPair {a = A -> A} id (\x => Refl, \x => Refl)
+
 
 -- We introduce the notation for equivalence here (A ≃ B),
 -- as well as the properties it should have as an equivalence relation,
@@ -366,3 +381,6 @@ equiv_sym : forall A, B. A =~= B -> B =~= A
 
 -- Transitivity: If A ≃ B and B ≃ C then A ≃ C
 equiv_trans : forall A, B, C. A =~= B -> B =~= C -> A =~= C
+
+-- Transform a quasi-equivalence into an equivalence
+qeqToEquiv : forall A, B. A <~> B -> A =~= B

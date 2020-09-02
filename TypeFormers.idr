@@ -90,9 +90,9 @@ prodId_uniq {x = (a, b)} {y = (a', b')} r =
       D x y r = prodId (prodId_pr r) =:= r
   in J D (\(_, _) => Refl) r
 
--- prodId is a quasi-equivalence from (a = a', b = b') to (a, b) = (a', b')
-prodId_qinv : forall A, B. {x, y : (A, B)} -> qinv (prodId {x} {y})
-prodId_qinv = (prodId_pr ** (prodId_comp, prodId_uniq))
+-- (a = a', b = b') <~> (a, b) = (a', b')
+prodId_qinv : forall A, B. {a, a' : A} -> {b, b' : B} -> (a =:= a', b =:= b') <~> (a, b) =:= (a', b')
+prodId_qinv = ((prodId, prodId_pr) ** (prodId_comp, prodId_uniq))
 
 
 -- Reflexivity: Refl {z} = prodId (Refl {fst z} ∧ Refl {snd z})
@@ -190,9 +190,10 @@ dprodId_uniq {w = (a ** b)} {w' = (a' ** b')} r =
       D x y r = dprodId (dprodId_pr r) =:= r
   in J D (\(_ ** _) => Refl) r
 
--- dprodId is a quasi-equivalence from (a = a' ** b = b') to (a ** b) = (a' ** b')
-dprodId_qinv : forall A. {P : A -> Type} -> {w, w' : (x : A ** P x)} -> qinv (dprodId {w} {w'})
-dprodId_qinv = (dprodId_pr ** (dprodId_comp, dprodId_uniq))
+-- (a = a' ** b = b') <~> (a ** b) = (a' ** b')
+dprodId_qinv : forall A. {P : A -> Type} -> {a, a' : A} -> {b : P a} -> {b' : P a'} ->
+  (p : a =:= a' ** transport P p b =:= b') <~> (MkDPair {p = P} a b =:= MkDPair {p = P} a' b')
+dprodId_qinv = ((dprodId, dprodId_pr) ** (dprodId_comp, dprodId_uniq))
 
 
 -- p[(u : P _ ** Q (_ ** u))]* w = (p[P]* (fst x) ** (dprodId (p ** Refl))[Q]* (snd x))
@@ -254,7 +255,7 @@ unitId_uniq {x = ()} {y = ()} p =
 funext : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f ~~ g -> f =:= g
 
 -- Elimination rule: f = g -> ∀x, f x = g x
-happly : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f = g -> f ~~ g
+happly : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f =:= g -> f ~~ g
 happly p = J {A = (x : A) -> B x} (\f, g, _ => f ~~ g) (\_, _ => Refl) p
 
 
@@ -296,9 +297,9 @@ fun_uniq : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g)
   funext (happly p) =:= p
 fun_uniq p = J {A = (x : A) -> B x} (\f, g, p => funext (happly p) =:= p) fun_refl p
 
--- happly is a quasi-equivalence from f = g to f ~~ g
-fun_qinv : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> qinv (happly {f} {g})
-fun_qinv = (funext ** (fun_uniq, fun_comp))
+-- f = g <~> f ~~ g
+fun_qinv : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (f =:= g) <~> (f ~~ g)
+fun_qinv = ((happly, funext) ** (fun_uniq, fun_comp))
 
 
 -- p[A _ -> B _]* f = (\x => p[B]* (f (p⁻¹[A]* x)))
@@ -309,6 +310,7 @@ transport_fun p f =
       D x1 x2 p = (f : A x1 -> B x1) -> transport (\x => A x -> B x) p f =:= (\x => transport B p (f (transport A (invert p) x)))
   in J D (\_, _ => funext (\_ => Refl)) p f
 
+-- I have no idea what's going on here
 transport_dfun : forall X. {A : X -> Type} -> {B : (x : X) -> A x -> Type} -> {x1, x2 : X} ->
   (p : x1 =:= x2) -> (f : (a : A x1) -> B x1 a) -> (a : A x2) ->
   let AB : X -> Type
@@ -329,9 +331,74 @@ transport_dfun p f a =
             Bhat w = B (fst w) (snd w)
             a' : A x1
             a' = transport A (invert p) a
-            q : (MkDPair {p = A} x1 a') =:= (MkDPair {p = A} x2 a)
+            q : MkDPair {p = A} x1 a' =:= MkDPair {p = A} x2 a
             q = invert (dprodId (invert p ** Refl))
         in transport AB p f a =:= transport Bhat q (f a')
-      d : (x : X) -> D x x Refl
-      d x f a = Refl
-  in J D d p f a
+  in J D (\_, _, _ => Refl) p f a
+
+
+-- p[A _ -> B _]* f = g <~> ∀(a : A x), p[B]* (f a) = g (p[A]* a)
+ap_fun : forall X. {A, B : X -> Type} -> {x, y : X} -> (p : x =:= y) -> (f : A x -> B x) -> (g : A y -> B y) ->
+  transport (\z => A z -> B z) p f =:= g <~> (a : A x) -> (transport B p (f a) =:= g (transport A p a))
+ap_fun p f g =
+  let D : Dtype X
+      D x y p = (f : A x -> B x) -> (g : A y -> B y) ->
+        transport (\z => A z -> B z) p f =:= g <~> (a : A x) -> transport B p (f a) =:= g (transport A p a)
+  in J D (\_, _, _ => fun_qinv) p f g
+
+-- I don't know what this is and I don't know how to name it
+ap_fun_q : forall X. {A, B : X -> Type} -> {x, y : X} -> (p : x =:= y) -> (f : A x -> B x) -> (g : A y -> B y) ->
+  (q : transport (\z => A z -> B z) p f =:= g) -> (a : A x) ->
+  let i : transport (\z => A z -> B z) p f (transport A p a) =:= transport B p (f (transport A (invert p) (transport A p a)))
+      i = happly (transport_fun p f) (transport A p a)
+      j : transport B p (f (transport A (invert p) (transport A p a))) =:= transport B p (f a)
+      j = let j1 : transport A (invert p) (transport A p a) =:= transport A (p <> invert p) a
+              j1 = transport_distrib p (invert p) a
+              j2 : transport A (p <> invert p) a =:= a
+              j2 = ap (\p => transport A p a) (rightInv p)
+          in ap (transport B p . f) (j1 <> j2)
+      k : transport B p (f a) =:= g (transport A p a)
+      k = (qeqTo (ap_fun p f g)) q a
+  in happly q (transport A p a) =:= i <> j <> k
+ap_fun_q p f g q a =
+  let D : Dtype X
+      D x y p = (f : A x -> B x) -> (g : A y -> B y) -> (q : transport (\z => A z -> B z) p f =:= g) -> (a : A x) ->
+        let i : transport (\z => A z -> B z) p f (transport A p a) =:= transport B p (f (transport A (invert p) (transport A p a)))
+            i = happly (transport_fun p f) (transport A p a)
+            j : transport B p (f (transport A (invert p) (transport A p a))) =:= transport B p (f a)
+            j = let j1 : transport A (invert p) (transport A p a) =:= transport A (p <> invert p) a
+                    j1 = transport_distrib p (invert p) a
+                    j2 : transport A (p <> invert p) a =:= a
+                    j2 = ap (\p => transport A p a) (rightInv p)
+                in ap (transport B p . f) (j1 <> j2)
+            k : transport B p (f a) =:= g (transport A p a)
+            k = (qeqTo (ap_fun p f g)) q a
+        in happly q (transport A p a) =:= i <> j <> k
+      d : (x : X) -> (f, g : A x -> B x) -> (q : f =:= g) -> (a : A x) ->
+        happly q a =:= happly (funext {f = f} {g = f} (\_ => Refl)) a <> happly q a
+      d x f g q a = invert (happly (fun_comp (\_ => Refl)) a |> happly q a)
+  in J D d p f g q a
+
+-- I have no idea what's going on here either
+ap_dfun : forall X. {A : X -> Type} -> {B : (x : X) -> A x -> Type} -> {x, y : X} -> (p : x =:= y) ->
+  (f : (a : A x) -> B x a) -> (g : (a : A y) -> B y a) ->
+  transport (\z => (a : A z) -> B z a) p f =:= g <~> (a : A x) ->
+    let Bhat : (x : X ** A x) -> Type
+        Bhat w = B (fst w) (snd w)
+        a' : A y
+        a' = transport A p a
+        q : MkDPair {p = A} x a =:= MkDPair {p = A} y a'
+        q = dprodId (p ** Refl)
+    in transport Bhat q (f a) = g a'
+ap_dfun p f g =
+  let D : Dtype X
+      D x y p = (f : (a : A x) -> B x a) -> (g : (a : A y) -> B y a) ->
+        transport (\z => (a : A z) -> B z a) p f =:= g <~> (a : A x) ->
+          let Bhat : (x : X ** A x) -> Type
+              Bhat w = B (fst w) (snd w)
+              a' : A y
+              a' = transport A p a
+              q : MkDPair {p = A} x a =:= MkDPair {p = A} y a'
+              q = dprodId (p ** Refl)
+          in transport Bhat q (f a) = g a'
+  in J D (\_, _, _ => fun_qinv) p f g
