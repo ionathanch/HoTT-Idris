@@ -339,3 +339,23 @@ ap_dfun p f g =
               q = dprodId (p ** Refl)
           in transport Bhat q (f a) = g a'
   in J D (\_, _, _ => fun_qinv) p f g
+
+------------------------
+---- IDENTITY TYPES ----
+------------------------
+
+{- 
+  We use the book's names here rather than our conventions
+  *Id, *Id_elim, *Id_comp, *Id_uniq, transport_*, ap_*
+  since these seems to differ from this pattern a bit here.
+-}
+
+ap_inv : forall A, B. (f : A -> B) -> qinv f -> {a, a' : A} -> a =:= a' <~> f a =:= f a'
+ap_inv f (g ** (alpha, beta)) =
+  let ap_f : a =:= a' -> f a =:= f a'
+      ap_f p = ap f p
+      ap_inv : f a =:= f a' -> a =:= a'
+      ap_inv q = (invert (alpha a)) <> ap g q <> (alpha a')
+      ap_comp : (p : a =:= a') -> ap_inv (ap_f p) =:= p
+      ap_uniq : (q : f a =:= f a') -> ap_f (ap_inv q) =:= q
+  in ((ap_f, ap_inv) ** (ap_comp, ap_uniq))
