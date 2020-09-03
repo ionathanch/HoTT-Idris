@@ -245,14 +245,52 @@ unitId_uniq {x = ()} {y = ()} p =
   See this discussion on Zulip for an overview:
   https://hott.zulipchat.com/#narrow/stream/228519-general/topic/Computation.20and.20uniqueness.20rules.20for.20function.20types
 
+  We prove funext using the Interval type. See the following for details:
+  https://homotopytypetheory.org/2011/04/23/running-circles-around-in-your-proof-assistant/
   Later on, funext should be provable from univalence.
-  Once it has computational content, it is expected that fun_refl's type would compute,
+  With that computational content, it is expected that fun_refl's type would compute,
   and it would then have an easy proof (possibly simply \f => Refl).
 -}
 
--- [AXIOM] Introduction rule: ∀x, f x = g x -> f = g
--- This is functional extensionality and can be proven from univalence
+namespace Interval
+  export -- Do not export constructors!
+  data I : Type where
+    Zero : I
+    One : I
+
+  public export
+  zero : I
+  zero = Zero
+
+  public export
+  one : I
+  one = One
+
+  export
+  seg : Interval.zero =:= Interval.one
+
+  public export
+  I_rec : forall C. {a, b : C} -> (p : a =:= b) -> I -> C
+  I_rec {a} {b} _ Zero = a
+  I_rec {a} {b} _ One  = b
+
+  public export
+  I_ind : {C : I -> Type} -> {a : C Interval.zero} -> {b : C Interval.one} -> (p : transport C Interval.seg a =:= b) -> (i : I) -> C i
+  I_ind {a} {b} _ Zero = a
+  I_ind {a} {b} _ One  = b
+
+  export
+  seg_comp : forall C. {a, b : C} -> (p : a =:= b) -> ap (I_rec p) Interval.seg =:= p
+
+-- Introduction rule: ∀x, f x = g x -> f = g
+-- This is functional extensionality and can also be proven from univalence
 funext : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f ~~ g -> f =:= g
+funext h =
+  let k : I -> (x : A) -> B x
+      k i x = I_rec (h x) i
+      res : (\x => f x) =:= (\x => g x)
+      res = ap k seg
+  in res
 
 -- Elimination rule: f = g -> ∀x, f x = g x
 happly : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f =:= g -> f ~~ g
