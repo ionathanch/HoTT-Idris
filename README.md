@@ -5,7 +5,8 @@ Of course, univalence is inconsistent with the brand of pattern-matching that Id
 
 * TypeTheory: Chapter 1
 * Homotopy: Chapter 2 - Sections 2.1 to 2.4
-* TypeFormers: Chapter 2 - Sections 2.5 to 2.15
+* TypeFormers: Chapter 2 - Sections 2.5 to 2.11
+* FunExt: Sections 2.9, 4.9, and 6.3 (TODO)
 * Equivalence: Second half of Section 2.4; Chapter 4 (TODO)
 
 ## Bonus content
