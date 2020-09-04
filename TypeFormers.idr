@@ -359,3 +359,24 @@ ap_inv f (g ** (alpha, beta)) =
       ap_comp : (p : a =:= a') -> ap_inv (ap_f p) =:= p
       ap_uniq : (q : f a =:= f a') -> ap_f (ap_inv q) =:= q
   in ((ap_f, ap_inv) ** (ap_comp, ap_uniq))
+
+transport_concatl : forall A. {a, x1, x2 : A} -> (p : x1 =:= x2) -> (q : a =:= x1) ->
+  transport (\x => a =:= x) p q =:= q <> p
+transport_concatl p q =
+  let D : Dtype A
+      D x1 x2 p = (q : a =:= x1) -> transport (\x => a =:= x) p q =:= q <> p
+  in J D (\_, q => rightId q) p q
+
+transport_concatr : forall A. {a, x1, x2 : A} -> (p : x1 =:= x2) -> (q : x1 =:= a) ->
+  transport (\x => x =:= a) p q =:= (invert p) <> q
+transport_concatr p q =
+  let D : Dtype A
+      D x1 x2 p = (q : x1 =:= a) -> transport (\x => x =:= a) p q =:= (invert p) <> q
+  in J D (\_, q => leftId q) p q
+
+transport_concat : forall A. {a, x1, x2 : A} -> (p : x1 =:= x2) -> (q : x1 =:= x1) ->
+  transport (\x => x =:= x) p q =:= (invert p) <> q <> p
+transport_concat p q =
+  let D : Dtype A
+      D x1 x2 p = (q : x1 =:= x1) -> transport (\x => x =:= x) p q =:= (invert p) <> q <> p
+  in J D (\_, q => rightId q) p q

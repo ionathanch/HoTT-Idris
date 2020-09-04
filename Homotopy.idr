@@ -60,6 +60,22 @@ p <> q =
       D x y _ = (z : A) -> y = z -> x = z
   in J D (\_, _, r => r) p z q
 
+{-
+  We can also define it by double induction on both p and q.
+  However, this causes (<>) to compute iff p and q are BOTH Refl,
+  which can be inconvenient.
+
+p <> q =
+  let D : Dtype A
+      D x y _ = {z : A} -> y = z -> x = z
+      d : (y : A) -> D y y Refl
+      d y q =
+        let D' : Dtype A
+            D' y z q = (y = z)
+        in J D' (\_ => Refl) q
+  in J D d p q
+-}
+
 
 -- p = Refl · p
 leftId : forall A. {x, y : A} -> (p : x =:= y) -> p =:= Refl <> p
@@ -187,6 +203,35 @@ alpha |> r = ap (\s => s <> r) alpha
 infixr 9 <|
 (<|) : forall A. {x, y, z : A} -> {r, s : y =:= z} -> (q : x =:= y) -> (b : r =:= s) -> q <> r =:= q <> s
 q <| beta = ap (\p => q <> p) beta
+
+
+-- p · q = p · r -> q = r
+leftCancel : forall A. {x, y, z : A} -> (p : x =:= y) -> (q, r : y =:= z) ->
+  p <> q =:= p <> r -> q =:= r
+leftCancel p q r s =
+  let t : invert p <> (p <> q) =:= invert p <> (p <> r)
+      t = invert p <| s
+      u : (invert p <> p) <> q =:= (invert p <> p) <> r
+      u = invert (associativity (invert p) p q) <> t <> associativity (invert p) p r
+      vl : q =:= (invert p <> p) <> q
+      vl = leftId q <> (invert (leftInv p) |> q)
+      vr : (invert p <> p) <> r =:= r
+      vr = ((leftInv p) |> r) <> invert (leftId r)
+  in vl <> u <> vr
+
+-- p · r = q · r -> p = q
+rightCancel : forall A. {x, y, z : A} -> (p, q : x =:= y) -> (r : y =:= z) ->
+  p <> r = q <> r -> p = q
+rightCancel p q r s =
+  let t : (p <> r) <> invert r =:= (q <> r) <> invert r
+      t = s |> invert r
+      u : p <> (r <> invert r) =:= q <> (r <> invert r)
+      u = associativity p r (invert r) <> t <> invert (associativity q r (invert r))
+      vl : p =:= p <> (r <> invert r)
+      vl = rightId p <> (p <| invert (rightInv r))
+      vr : q <> (r <> invert r) =:= q
+      vr = (q <| rightInv r) <> invert (rightId q)
+  in vl <> u <> vr
 
 --------------------------------------
 ---- TYPE FAMILIES are FIBRATIONS ----
