@@ -56,7 +56,7 @@ funIsSet setB f g p q =
 ---- PROPOSITIONS ----
 ----------------------
 
--- Definition: Mere propositions
+-- Definition: Mere propositions ((-1)-types)
 isProp : (P : Type) -> Type
 isProp p = (x, y : p) -> x =:= y
 
@@ -226,3 +226,51 @@ puc propP squashP x = (qeqFrom (squash_qinv (propP x))) (squashP x)
 
 -- Exercise 3.19
 unsquashDec : (P : Nat -> Type) -> decTypeFam P -> Squash (n : Nat ** P n) -> (n : Nat ** P n)
+
+-------------------------
+---- CONTRACTIBILITY ----
+-------------------------
+
+-- Definition: Contractible types ((-2)-types)
+isContr : (A : Type) -> Type
+isContr a = (c : a ** (x : a) -> c =:= x)
+
+-- A contractible type is a mere proposition
+contrIsProp : forall A. isContr A -> isProp A
+contrIsProp (c ** contrA) x y = invert (contrA x) <> contrA y
+
+-- An inhabited mere proposition is contractible
+propIsContr : forall A. A -> isProp A -> isContr A
+propIsContr a propA = (a ** propA a)
+
+-- Contractible types are equivalent to unit
+contrUnit : forall A. isContr A -> A <~> Unit
+contrUnit a@(c ** contrA) = propUnit (contrIsProp a) c
+
+-- Contractibility is a mere proposition
+isContrIsProp : forall A. isProp (isContr A)
+isContrIsProp c@(a ** p) c'@(a' ** p') =
+  let q : a =:= a'
+      q = p a'
+      p'' : (x : A) -> a' =:= x
+      p'' = transport (\a => (x : A) -> a =:= x) q p
+      setA : isSet A
+      setA = propIsSet (contrIsProp c)
+      propP : isProp ((x : A) -> a' =:= x)
+      propP = funIsProp (\x => setA a' x)
+  in dprodId (q ** propP p'' p')
+
+-- Functions to contractible types are constractible
+funIsContr : forall A. {P : A -> Type} -> ((a : A) -> isContr (P a)) -> isContr ((x : A) -> P x)
+funIsContr contrP = propIsContr (\x => fst (contrP x)) (funIsProp (\a => contrIsProp (contrP a)))
+
+-- TODO: Retracts
+
+-- ∃(x : A) s.t. a = x is contractible
+basedIsContr : forall A. (a : A) -> isContr (x : A ** a =:= x)
+basedIsContr a =
+  let centre : (x : A ** a =:= x)
+      centre = (a ** Refl)
+      centreEq : (xp : (x : A ** a =:= x)) -> centre =:= xp
+      centreEq (x ** p) = dprodId (p ** transport_concatl p Refl)
+  in (centre ** centreEq)
