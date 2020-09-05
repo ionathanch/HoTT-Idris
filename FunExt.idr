@@ -39,24 +39,24 @@ namespace Interval
   seg : Interval.zero =:= Interval.one
 
   public export
-  I_rec : forall C. {a, b : C} -> (p : a =:= b) -> I -> C
-  I_rec {a} {b} _ Zero = a
-  I_rec {a} {b} _ One  = b
+  rec_I : forall C. {a, b : C} -> (p : a =:= b) -> I -> C
+  rec_I {a} {b} _ Zero = a
+  rec_I {a} {b} _ One  = b
 
   public export
-  I_ind : {C : I -> Type} -> {a : C Interval.zero} -> {b : C Interval.one} -> (p : transport C Interval.seg a =:= b) -> (i : I) -> C i
-  I_ind {a} {b} _ Zero = a
-  I_ind {a} {b} _ One  = b
+  ind_I : {C : I -> Type} -> {a : C Interval.zero} -> {b : C Interval.one} -> (p : transport C Interval.seg a =:= b) -> (i : I) -> C i
+  ind_I {a} {b} _ Zero = a
+  ind_I {a} {b} _ One  = b
 
   export
-  seg_comp : forall C. {a, b : C} -> (p : a =:= b) -> ap (I_rec p) Interval.seg =:= p
+  seg_comp : forall C. {a, b : C} -> (p : a =:= b) -> ap (rec_I p) Interval.seg =:= p
 
 -- Introduction rule: ∀x, f x = g x -> f = g
 -- This is naïve functional extensionality and can also be proven from univalence
 funext : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f ~~ g -> f =:= g
 funext h =
   let k : I -> (x : A) -> B x
-      k i x = I_rec (h x) i
+      k i x = rec_I (h x) i
       res : (\x => f x) =:= (\x => g x)
       res = ap k seg
   in res

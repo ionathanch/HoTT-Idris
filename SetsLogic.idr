@@ -132,3 +132,68 @@ powerset a = a -> PropU
 ----------------------------------
 ---- PROPOSITIONAL TRUNCATION ----
 ----------------------------------
+
+namespace Squash
+  export
+  data Squash : Type -> Type where
+    MkSquash : forall A. (a : A) -> Squash A
+
+  public export
+  mkSquash : forall A. (a : A) -> Squash A
+  mkSquash a = MkSquash a
+
+  export
+  squash : forall A. (x, y : Squash A) -> x =:= y
+
+  public export
+  squash_rec : forall A, B. isProp B -> (f : A -> B) ->
+    (g : Squash A -> B ** g . Squash.mkSquash ~~ f)
+  squash_rec propB f =
+    let g : Squash A -> B
+        g (MkSquash a) = f a
+        h : g . Squash.mkSquash ~~ f
+        h a = propB (g (mkSquash a)) (f a)
+    in (g ** h)
+
+  public export
+  squash_ind : forall A. {B : Squash A -> Type} -> ((x : Squash A) -> isProp (B x)) ->
+    ((a : A) -> B (mkSquash a)) -> ((x : Squash A) -> B x)
+  squash_ind _ f (MkSquash a) = f a
+
+-------------------------
+---- AXIOM of CHOICE ----
+-------------------------
+
+-- The axiom of choice: If ∀(x : X), ∃(a : A x) s.t. P x a,
+-- then ∃(g : (x : X) -> A x) s.t. ∀(x : X), P x (g x)
+-- Intuitively, if for every x there's an a that satisfies P,
+-- then there is a choice function g that can pick out the correct a
+-- associated with that x such that P is satisfied.
+AC : Type
+AC = forall X. (A : X -> Type) -> (P : (x : X) -> A x -> Type) ->
+  isSet X -> ((x : X) -> isSet (A x)) -> ((x : X) -> (a : A x) -> isProp (P x a)) ->
+  ((x : X) -> Squash (a : A x ** P x a)) -> Squash (g : (x : X) -> A x ** (x : X) -> P x (g x))
+
+-- The cartesian product of a family of nonempty sets is nonempty.
+CP : Type
+CP = forall X. (Y : X -> Type) -> ((x : X) -> Squash (Y x)) -> Squash ((x : X) -> Y x)
+
+{-
+  We have that AC <~> CP, but this proof requires Theorem 2.15.7.
+-}
+
+------------------------------------
+---- PRINCIPLE of UNIQUE CHOICE ----
+------------------------------------
+
+squash_qinv : forall P. isProp P -> P <~> Squash P
+squash_qinv propP =
+  let unMkSquash : Squash P -> P
+      unMkSquash = fst (squash_rec propP id)
+  in logicalEquiv propP squash mkSquash unMkSquash
+
+puc : forall A. {P : A -> Type} -> ((x : A) -> isProp (P x)) -> ((x : A) -> Squash (P x)) -> (x : A) -> P x
+puc propP squashP x = (qeqFrom (squash_qinv (propP x))) (squashP x)
+
+-- Exercise 3.19
+unsquashDec : (P : Nat -> Type) -> decTypeFam P -> Squash (n : Nat ** P n) -> (n : Nat ** P n)
