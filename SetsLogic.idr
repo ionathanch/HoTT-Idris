@@ -32,6 +32,26 @@ setIsOne f x y p q r s =
       gprs = apdg r <> invert (apdg s)
   in leftCancel (g p) r s gprs
 
+-- Products of sets are sets
+prodIsSet : forall A, B. isSet A -> isSet B -> isSet (A, B)
+prodIsSet f g x y p q =
+  let pqfst : prodId_pr1 p =:= prodId_pr1 q
+      pqfst = f (fst x) (fst y) (prodId_pr1 p) (prodId_pr1 q)
+      pqsnd : prodId_pr2 p =:= prodId_pr2 q
+      pqsnd = g (snd x) (snd y) (prodId_pr2 p) (prodId_pr2 q)
+      pq : prodId {x} {y} (prodId_pr p) =:= prodId {x} {y} (prodId_pr q)
+      pq = ap prodId (prodId (pqfst, pqsnd))
+  in invert (prodId_uniq p) <> pq <> prodId_uniq q
+
+-- Functions to sets are sets
+funIsSet : forall A. {B : A -> Type} -> ((x : A) -> isSet (B x)) -> isSet ((x : A) -> B x)
+funIsSet setB f g p q =
+  let pq_happly : (x : A) -> happly p x =:= happly q x
+      pq_happly = \x => setB x (f x) (g x) (happly p x) (happly q x)
+      pq : funext (happly p) =:= funext (happly q)
+      pq = ap funext (funext pq_happly)
+  in invert (fun_uniq p) <> pq <> fun_uniq q
+
 ----------------------
 ---- PROPOSITIONS ----
 ----------------------
@@ -73,6 +93,15 @@ isSetIsProp f g =
   let fgxypq : (x, y : A) -> (p, q : x =:= y) -> f x y p q =:= g x y p q
       fgxypq x y p q = setIsOne f x y p q (f x y p q) (g x y p q)
   in funext (\x => funext (\y => funext (\p => funext (fgxypq x y p))))
+
+-- Products of propositions are propositions
+-- Weird bug: Idris won't let me use isProp A and isProp B
+prodIsProp : forall A, B. ((a, a' : A) -> a =:= a') -> ((b, b' : B) -> b =:= b') -> isProp (A, B)
+prodIsProp f g (a, b) (a', b') = prodId (f a a', g b b')
+
+-- Functions to propositions are propositions
+funIsProp : forall A. {B : A -> Type} -> ((x : A) -> isProp (B x)) -> isProp ((x : A) -> B x)
+funIsProp propB f g = funext (\x => propB x (f x) (g x))
 
 --------------------------------
 ---- LOGIC and DECIDABILITY ----
