@@ -207,9 +207,7 @@ AC = forall X. (A : X -> Type) -> (P : (x : X) -> A x -> Type) ->
 CP : Type
 CP = forall X. (Y : X -> Type) -> ((x : X) -> Squash (Y x)) -> Squash ((x : X) -> Y x)
 
-{-
-  We have that AC <~> CP, but this proof requires Theorem 2.15.7.
--}
+ACqinvCP : AC <~> CP
 
 ------------------------------------
 ---- PRINCIPLE of UNIQUE CHOICE ----
@@ -225,7 +223,7 @@ puc : forall A. {P : A -> Type} -> ((x : A) -> isProp (P x)) -> ((x : A) -> Squa
 puc propP squashP x = (qeqFrom (squash_qinv (propP x))) (squashP x)
 
 -- Exercise 3.19
-unsquashDec : (P : Nat -> Type) -> decTypeFam P -> Squash (n : Nat ** P n) -> (n : Nat ** P n)
+--unsquashDec : (P : Nat -> Type) -> decTypeFam P -> Squash (n : Nat ** P n) -> (n : Nat ** P n)
 
 -------------------------
 ---- CONTRACTIBILITY ----
@@ -260,17 +258,75 @@ isContrIsProp c@(a ** p) c'@(a' ** p') =
       propP = funIsProp (\x => setA a' x)
   in dprodId (q ** propP p'' p')
 
+-- Contractibility of contractibles is contractible
+contrIsContr : forall A. isContr A -> isContr (isContr A)
+contrIsContr contrA = propIsContr contrA isContrIsProp
+
 -- Functions to contractible types are constractible
 funIsContr : forall A. {P : A -> Type} -> ((a : A) -> isContr (P a)) -> isContr ((x : A) -> P x)
 funIsContr contrP = propIsContr (\x => fst (contrP x)) (funIsProp (\a => contrIsProp (contrP a)))
 
--- TODO: Retracts
-
 -- ∃(x : A) s.t. a = x is contractible
-basedIsContr : forall A. (a : A) -> isContr (x : A ** a =:= x)
-basedIsContr a =
+singletonIsContr : forall A. (a : A) -> isContr (x : A ** a =:= x)
+singletonIsContr a =
   let centre : (x : A ** a =:= x)
       centre = (a ** Refl)
       centreEq : (xp : (x : A ** a =:= x)) -> centre =:= xp
       centreEq (x ** p) = dprodId (p ** transport_concatl p Refl)
   in (centre ** centreEq)
+
+
+-- B is a retract of A if
+-- there is a retraction (r : A -> B) and a section (s : B -> A) such that
+-- there is a homotopy (r . s ~~ id)
+isRetr : (B : Type) -> (A : Type) -> Type
+isRetr b a = (rs : (a -> b, b -> a) ** (y : b) -> (fst rs) (snd rs y) =:= y)
+
+-- If B is a retract of A and A is contractible then B is contractible
+retrIsContr : forall A, B. isRetr B A -> isContr A -> isContr B
+retrIsContr ((r, s) ** e) (a0 ** contrA) =
+  let b0 : B
+      b0 = r a0
+      contrB : (b : B) -> b0 =:= b
+      contrB b = ap r (contrA (s b)) <> e b
+  in (b0 ** contrB)
+
+
+-- ∀(x : A) isContr (P x) -> ∃(x : A) s.t. P x <~> A
+contrFamilyType : forall A. {P : A -> Type} -> ((x : A) -> isContr (P x)) -> (x : A ** P x) <~> A
+contrFamilyType contrP =
+  let g : A -> (x : A ** P x)
+      g x = (x ** fst (contrP x))
+      gfst : (x : (a : A ** P a)) -> g (fst x) =:= x
+      gfst (a ** pa) = ap (\pa => (a ** pa)) (snd (contrP a) pa)
+  in ((fst, g) ** (gfst, \_ => Refl))
+
+-- ∀(x : A) isContr A @ c -> ∃(x : A) s.t. P x <~> P c
+contrFamilyCentre : forall A. {P : A -> Type} -> (contrA : isContr A) -> (x : A ** P x) <~> P (fst contrA)
+contrFamilyCentre (c ** contrA) =
+  let f : (x : A ** P x) -> P c
+      f (x ** px) = transport P (invert (contrA x)) px
+      g : P c -> (x : A ** P x)
+      g pc = (c ** pc)
+      fg : (pc : P c) -> transport P (invert (contrA c)) pc =:= pc
+      gf : (xpx : (x : A ** P x)) -> g (f xpx) =:= xpx
+      gf (x ** px) =
+        let cx : c =:= x
+            cx = contrA x in
+        let pcx1 : transport P cx (transport P (invert cx) px) =:= transport P (invert cx <> cx) px
+            pcx1 = transport_distrib (invert cx) cx px
+            pcx2 : transport P (invert cx <> cx) px =:= px
+            pcx2 = ap (\p => transport P p px) (leftInv cx)
+        in dprodId (cx ** pcx1 <> pcx2)
+  in ((f, g) ** (gf, fg))
+
+
+-- A is a mere proposition iff ∀(x, y : A), x = y is contractible
+propIsContrId : forall A. isProp A -> (x, y : A) -> isContr (x =:= y)
+propIsContrId propA x y =
+  let xy : x =:= y
+      xy = propA x y
+  in (xy ** (propIsSet propA) x y xy)
+
+contrIdIsProp : forall A. ((x, y : A) -> isContr (x =:= y)) -> isProp A
+contrIdIsProp contrId x y = fst (contrId x y)

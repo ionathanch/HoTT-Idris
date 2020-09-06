@@ -59,8 +59,11 @@ ac : forall a, b, r. ((x : a) -> (y : b ** r x y)) -> (f : a -> b ** (x : a) -> 
 ac g = MkDPair {a = a -> b} (\x => pr1_dprod (g x)) (\x => pr2_dprod (g x))
 
 -- Example: Magmas
-magma : (a : Type ** a -> a -> a)
-pointedMagma : (a : Type ** (a -> a -> a, a))
+magma : Type
+magma = (a : Type ** a -> a -> a)
+
+pointedMagma : Type
+pointedMagma = (a : Type ** (a -> a -> a, a))
 
 -------------------------
 ---- COPRODUCT TYPES ----

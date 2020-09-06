@@ -149,7 +149,6 @@ Omega2 _ a = Refl {x = a} =:= Refl {x = a}
 
 -- Composition of 2-fold loop spaces is commutative
 EckmannHilton : (A : Type) -> (a : A) -> (x, y : Omega2 A a) -> x <> y =:= y <> x
-EckmannHilton _ a x y = ?eh
 
 
 -- n-fold iterated loop spaces

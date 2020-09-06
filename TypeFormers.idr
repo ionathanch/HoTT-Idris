@@ -1,6 +1,6 @@
 {-
   Chapter 2: Homotopy Type Theory
-  Sections 2.5 to 2.15
+  Sections 2.5 to 2.13
 
   This file covers the type formers:
   * Nondependent and dependent product types
