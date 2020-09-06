@@ -23,7 +23,7 @@ Of course, univalence is inconsistent with the brand of pattern-matching that Id
 ### Partially-completed proofs
 
 * Homotopy.EckmannHilton
-* TypeFormers.ap_inv: ap_comp, ap_uniq
+* TypeFormers.ap_uniq (will not do)
 * SetsLogic.ACqinvCP
 * SetsLogic.contrFamilyCentre: fg
 
@@ -32,7 +32,6 @@ Of course, univalence is inconsistent with the brand of pattern-matching that Id
 Some of these have been partially begun and show up as program holes in the above.
 
 * Section 2.1: Theorem 2.1.6 (EckmannHilton)
-* Section 2.11: Theorem 2.11.1 (ap_inv)
 * Section 2.11: Theorems 2.11.3 to 2.11.5
 * Sections 2.10, 2.12 to 2.15
 * Section 3.8: Lemma 3.8.2 (ACqinvCP)

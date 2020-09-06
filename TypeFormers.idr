@@ -350,27 +350,44 @@ ap_dfun p f g =
   since these seems to differ from this pattern a bit here.
 -}
 
-ap_inv : forall A, B. (f : A -> B) -> qinv f -> {a, a' : A} -> a =:= a' <~> f a =:= f a'
-ap_inv f (g ** (alpha, beta)) =
-  let ap_f : a =:= a' -> f a =:= f a'
-      ap_f p = ap f p
-      ap_inv : f a =:= f a' -> a =:= a'
-      ap_inv q = ((invert (alpha a)) <> ap g q) <> (alpha a')
-      ap_comp : (p : a =:= a') -> ap_inv (ap_f p) =:= p
-      ap_comp p =
-        let alpha' : Prelude.id ~~ g . f
-            alpha' a = invert (alpha a)
-            ap_func : alpha' a <> ap g (ap f p) =:= alpha' a <> ap (g . f) p
-            ap_func = alpha' a <| ap_concat f g p
-            ap_nat : alpha' a <> ap (g . f) p =:= p <> alpha' a'
-            ap_nat = naturality alpha' p <> (ap_ident p |> alpha' a')
-            ap_res : (alpha' a <> ap g (ap f p)) <> alpha a' =:= p <> alpha' a' <> alpha a'
-            ap_res = ((ap_func <> ap_nat) |> alpha a') <> invert (associativity p (alpha' a') (alpha a'))
-            cancelRight : p <> alpha' a' <> alpha a' =:= p
-            cancelRight = (p <| leftInv (alpha a')) <> invert (rightId p)
-        in ap_res <> cancelRight
-      ap_uniq : (q : f a =:= f a') -> ap_f (ap_inv q) =:= q
-  in ((ap_f, ap_inv) ** (ap_comp, ap_uniq))
+ap_inv : forall A, B. (f : A -> B) -> qinv f -> {a, a' : A} -> f a =:= f a' -> a =:= a'
+ap_inv f (g ** (alpha, beta)) q = ((invert (alpha a)) <> ap g q) <> alpha a'
+
+ap_comp : forall A, B. (f : A -> B) -> (g : qinv f) -> {a, a' : A} -> (p : a =:= a') -> ap_inv f g (ap f p) =:= p
+ap_comp f (g ** (alpha, beta)) p =
+  let alpha' : Prelude.id ~~ g . f
+      alpha' a = invert (alpha a)
+      ap_func : alpha' a <> ap g (ap f p) =:= alpha' a <> ap (g . f) p
+      ap_func = alpha' a <| ap_concat f g p
+      ap_nat : alpha' a <> ap (g . f) p =:= p <> alpha' a'
+      ap_nat = naturality alpha' p <> ap_ident p |> alpha' a'
+      ap_res : (alpha' a <> ap g (ap f p)) <> alpha a' =:= p <> alpha' a' <> alpha a'
+      ap_res = ((ap_func <> ap_nat) |> alpha a') <> invert (associativity p (alpha' a') (alpha a'))
+      cancelRight : p <> alpha' a' <> alpha a' =:= p
+      cancelRight = (p <| leftInv (alpha a')) <> invert (rightId p)
+  in ap_res <> cancelRight
+
+ap_uniq : forall A, B. (f : A -> B) -> (g : qinv f) -> {a, a' : A} -> (q : f a =:= f a') -> ap f (ap_inv f g q) =:= q
+ap_uniq f (g ** (alpha, beta)) q =
+  let beta' : Prelude.id ~~ f . g
+      beta' a = invert (beta a)
+      apapinv : f a =:= f a'
+      apapinv = ap f ((invert (alpha a) <> ap g q) <> alpha a')
+      apu1 : apapinv =:= beta' (f a) <> beta (f a) <> apapinv
+      apu1 = leftId apapinv
+        <> (invert (leftInv (beta (f a))) |> apapinv)
+        <> invert (associativity (beta' (f a)) (beta (f a)) apapinv)
+      apu2 : beta' (f a) <> beta (f a) <> apapinv =:= (beta' (f a) <> (beta (f a) <> apapinv) <> beta' (f a')) <> beta (f a')
+      apu2 = rightId (beta' (f a) <> beta (f a) <> apapinv)
+        <> ((beta' (f a) <> beta (f a) <> apapinv) <| invert (leftInv (beta (f a'))))
+        <> associativity (beta' (f a) <> beta (f a) <> apapinv) (beta' (f a')) (beta (f a'))
+        <> (invert (associativity (beta' (f a)) (beta (f a) <> apapinv) (beta' (f a'))) |> beta (f a'))
+      apu3 : (beta' (f a) <> (beta (f a) <> apapinv) <> beta' (f a')) <> beta (f a') =:= q
+      apu3 = believe_me () -- I swear it's true. Theorem 2.11.1
+  in apu1 <> apu2 <> apu3
+
+ap_qinv : forall A, B. (f : A -> B) -> qinv f -> {a, a' : A} -> a =:= a' <~> f a =:= f a'
+ap_qinv f g = ((ap f, ap_inv f g) ** (ap_comp f g, ap_uniq f g))
 
 transport_concatl : forall A. {a, x1, x2 : A} -> (p : x1 =:= x2) -> (q : a =:= x1) ->
   transport (\x => a =:= x) p q =:= q <> p

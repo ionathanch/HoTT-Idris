@@ -20,7 +20,7 @@
 
 -- Redefine homogenous equality with a lower infixity
 -- so that it binds /less/ tightly than <>
-infix 8 =:=
+infix 7 =:=
 (=:=) : (x : a) -> (y : a) -> Type
 (=:=) = (===)
 
@@ -53,7 +53,7 @@ invert : forall A. {x, y : A} -> x =:= y -> y =:= x
 invert p = J (\x, y, _ => y =:= x) (\_ => Refl) p
 
 -- Transitivity: If x = y and y = z then x = z
-infixr 9 <>
+infixr 8 <>
 (<>) : forall A. {x, y, z : A} -> x =:= y -> y =:= z -> x =:= z
 p <> q =
   let D : Dtype A
