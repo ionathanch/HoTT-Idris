@@ -1,6 +1,6 @@
 {-
   Chapter 2: Homotopy Type Theory
-  Sections 2.5 to 2.13
+  Sections 2.5 to 2.13, 2.14
 
   This file covers the type formers:
   * Nondependent and dependent product types
@@ -20,6 +20,8 @@
 
   We will also show that introduction and elimination are quasi-inverses,
   with computation and uniqueness as proofs.
+
+  Finally, we have the universal properties of these type formers.
 -}
 
 import Homotopy
@@ -409,3 +411,39 @@ transport_concat p q =
   let D : Dtype A
       D x1 x2 p = (q : x1 =:= x1) -> transport (\x => x =:= x) p q =:= (invert p) <> q <> p
   in J D (\_, q => rightId q) p q
+
+------------------------------
+---- UNIVERSAL PROPERTIES ----
+------------------------------
+
+-- The axiom of choice: ∀(x : X), ∃(a : A x) s.t. P x a -> ∃(g : (x : X) -> A x) s.t. ∀(x : X), P x (g x)
+ac : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
+  (f : (x : X) -> (a : A x ** P x a)) -> (g : (x : X) -> A x ** (x : X) -> P x (g x))
+ac f = MkDPair {a = (x : X) -> A x} (\x => fst (f x)) (\x => snd (f x))
+
+-- Quasi-inverse of the axiom of choice
+ac_inv : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
+  (gh : (g : (x : X) -> A x ** (x : X) -> P x (g x))) -> ((x : X) -> (a : A x ** P x a))
+ac_inv (g ** h) x = (g x ** h x)
+
+-- The axiom of choice is a quasi-equivalence
+
+ac_comp : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
+  (gh : (g : (x : X) -> A x ** (x : X) -> P x (g x))) -> ac {P} (ac_inv {P} gh) =:= gh
+ac_comp (g ** h) =
+  let etag : (\x => g x) =:= g
+      etag = Refl
+      etah : (\x => h x) =:= h
+      etah = Refl
+  in rewrite etag in rewrite etah in Refl
+
+ac_uniq : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
+  (f : (x : X) -> (a : A x ** P x a)) -> ac_inv {P} (ac {P} f) =:= f
+ac_uniq f =
+  let dprod_uniq : forall A. {P : A -> Type} -> (r : (a : A ** P a)) -> (fst r ** snd r) =:= r
+      dprod_uniq (a ** b) = Refl
+  in funext (\x => dprod_uniq (f x))
+
+ac_qinv : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
+  ((x : X) -> (a : A x ** P x a)) <~> (g : (x : X) -> A x ** (x : X) -> P x (g x))
+ac_qinv = ((ac, ac_inv) ** (ac_uniq, ac_comp))

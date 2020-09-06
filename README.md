@@ -6,7 +6,7 @@ According to [Pattern-Matching without K](https://dl.acm.org/doi/10.1145/2692915
 
 * TypeTheory: Chapter 1
 * Homotopy: Chapter 2 - Sections 2.1 to 2.4
-* TypeFormers: Chapter 2 - Sections 2.5 to 2.11
+* TypeFormers: Chapter 2 - Sections 2.5 to 2.15
 * FunExt: Sections 2.9, 4.9, and 6.3 (TODO)
 * SetsLogic: Chapter 3
 * Equivalence: Second half of Section 2.4; Chapter 4 (TODO)
@@ -36,13 +36,16 @@ These are places where the type has been declared with no implementation given, 
 Some of these have been partially begun and show up as program holes in the above.
 
 * Section 2.1: Theorem 2.1.6 (EckmannHilton)
-* Sections 2.10, 2.12 to 2.15
+* Sections 2.10, 2.12, 2.13
+* Section 2.15: Theorems 2.15.2 and 2.15.5
 * Section 3.8: Lemma 3.8.2 (ACqinvCP)
 * Section 3.11: Lemma 3.11.9 (ii)/Exercise 3.20 (contrFamilyCentre)
 
 These I do not plan on ever doing.
 
 * Section 2.11: Theorems 2.11.3 to 2.11.5
+* Section 2.14
+* Section 2.15: Equations 2.15.9 to 2.15.11
 
 ## Bonus content
 * PLFI: [Programming Language Foundations in Agda](https://plfa.github.io/), but in Idris. This only contains some of the sections I find interesting.
