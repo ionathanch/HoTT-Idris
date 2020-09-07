@@ -270,6 +270,13 @@ isContrIsProp c@(a ** p) c'@(a' ** p') =
 contrIsContr : forall A. isContr A -> isContr (isContr A)
 contrIsContr contrA = propIsContr contrA isContrIsProp
 
+-- Products of contractible types are contractible
+prodIsContr : forall A, B. isContr A -> isContr B -> isContr (A, B)
+prodIsContr (a ** contrA) (b ** contrB) =
+  let contrAB : (ab : (A, B)) -> (a, b) =:= ab
+      contrAB (a', b') = prodId (contrA a', contrB b')
+  in ((a, b) ** contrAB)
+
 -- Functions to contractible types are constractible
 funIsContr : forall A. {P : A -> Type} -> ((a : A) -> isContr (P a)) -> isContr ((x : A) -> P x)
 funIsContr contrP = propIsContr (\x => fst (contrP x)) (funIsProp (\a => contrIsProp (contrP a)))
