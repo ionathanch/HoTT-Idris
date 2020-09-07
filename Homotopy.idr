@@ -398,6 +398,27 @@ infix 4 <~>
 (<~>) : (A, B : Type) -> Type
 a <~> b = (fg : (a -> b, b -> a) ** ((snd fg) . (fst fg) ~~ id {a = a}, (fst fg) . (snd fg) ~~ id {a = b}))
 
+-- Reflexivity : A <~> A
+qeqv_refl : forall A. A <~> A
+qeqv_refl = ((id, id) ** (\_ => Refl, \_ => Refl))
+
+-- Symmetry : If A <~> B then B <~> A
+qeqv_sym : forall A, B. A <~> B -> B <~> A
+qeqv_sym ((f, g) ** (p, q)) = ((g, f) ** (q, p))
+
+-- Transitivity : If A <~> B and B <~> C then A <~> B
+qeqv_trans : forall A, C, B. A <~> B -> B <~> C -> A <~> C
+qeqv_trans ((c, d) ** (p, q)) ((f, g) ** (r, s)) =
+  let fc : A -> C
+      fc = f . c
+      dg : C -> A
+      dg = d . g
+      dgfc : (a : A) -> dg (fc a) =:= a
+      dgfc a = ap d (r (c a)) <> p a
+      fcdg : (c : C) -> fc (dg c) =:= c
+      fcdg c = ap f (q (g c)) <> s c
+  in ((fc, dg) ** (dgfc, fcdg))
+
 -- Get the "to" direction of the quasi-equivalence
 qeqTo : forall A, B. A <~> B -> (A -> B)
 qeqTo ((f, g) ** _) = f

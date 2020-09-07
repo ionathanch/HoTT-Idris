@@ -103,6 +103,14 @@ prodIsProp f g (a, b) (a', b') = prodId (f a a', g b b')
 funIsProp : forall A. {B : A -> Type} -> ((x : A) -> isProp (B x)) -> isProp ((x : A) -> B x)
 funIsProp propB f g = funext (\x => propB x (f x) (g x))
 
+-- The empty type is a proposition
+voidIsProp : isProp Void
+voidIsProp void impossible
+
+-- The unit type is a proposition
+unitIsProp : isProp Unit
+unitIsProp () () = Refl
+
 --------------------------------
 ---- LOGIC and DECIDABILITY ----
 --------------------------------
@@ -265,6 +273,10 @@ contrIsContr contrA = propIsContr contrA isContrIsProp
 -- Functions to contractible types are constractible
 funIsContr : forall A. {P : A -> Type} -> ((a : A) -> isContr (P a)) -> isContr ((x : A) -> P x)
 funIsContr contrP = propIsContr (\x => fst (contrP x)) (funIsProp (\a => contrIsProp (contrP a)))
+
+-- The unit type is contractible
+unitIsContr : isContr Unit
+unitIsContr = MkDPair () (\() => Refl)
 
 -- ∃(x : A) s.t. a = x is contractible
 singletonIsContr : forall A. (a : A) -> isContr (x : A ** a =:= x)
