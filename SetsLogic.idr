@@ -215,20 +215,20 @@ AC = forall X. (A : X -> Type) -> (P : (x : X) -> A x -> Type) ->
 CP : Type
 CP = forall X. (Y : X -> Type) -> ((x : X) -> Squash (Y x)) -> Squash ((x : X) -> Y x)
 
-ACqinvCP : AC <~> CP
+ACqeqvCP : AC <~> CP
 
 ------------------------------------
 ---- PRINCIPLE of UNIQUE CHOICE ----
 ------------------------------------
 
-squash_qinv : forall P. isProp P -> P <~> Squash P
-squash_qinv propP =
+squash_qeqv : forall P. isProp P -> P <~> Squash P
+squash_qeqv propP =
   let unMkSquash : Squash P -> P
       unMkSquash = fst (squash_rec propP id)
   in logicalEquiv propP squash mkSquash unMkSquash
 
 puc : forall A. {P : A -> Type} -> ((x : A) -> isProp (P x)) -> ((x : A) -> Squash (P x)) -> (x : A) -> P x
-puc propP squashP x = (qeqFrom (squash_qinv (propP x))) (squashP x)
+puc propP squashP x = (qeqFrom (squash_qeqv (propP x))) (squashP x)
 
 -- Exercise 3.19
 --unsquashDec : (P : Nat -> Type) -> decTypeFam P -> Squash (n : Nat ** P n) -> (n : Nat ** P n)

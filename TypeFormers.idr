@@ -95,8 +95,8 @@ prodId_uniq {x = (a, b)} {y = (a', b')} r =
   in J D (\(_, _) => Refl) r
 
 -- (a = a', b = b') <~> (a, b) = (a', b')
-prodId_qinv : forall A, B. {a, a' : A} -> {b, b' : B} -> (a =:= a', b =:= b') <~> (a, b) =:= (a', b')
-prodId_qinv = ((prodId, prodId_pr) ** (prodId_comp, prodId_uniq))
+prodId_qeqv : forall A, B. {a, a' : A} -> {b, b' : B} -> (a =:= a', b =:= b') <~> (a, b) =:= (a', b')
+prodId_qeqv = ((prodId, prodId_pr) ** (prodId_comp, prodId_uniq))
 
 
 -- Reflexivity: Refl {z} = prodId (Refl {fst z} ∧ Refl {snd z})
@@ -195,9 +195,9 @@ dprodId_uniq {w = (a ** b)} {w' = (a' ** b')} r =
   in J D (\(_ ** _) => Refl) r
 
 -- (a = a' ** b = b') <~> (a ** b) = (a' ** b')
-dprodId_qinv : forall A. {P : A -> Type} -> {a, a' : A} -> {b : P a} -> {b' : P a'} ->
+dprodId_qeqv : forall A. {P : A -> Type} -> {a, a' : A} -> {b : P a} -> {b' : P a'} ->
   (p : a =:= a' ** transport P p b =:= b') <~> (MkDPair {p = P} a b =:= MkDPair {p = P} a' b')
-dprodId_qinv = ((dprodId, dprodId_pr) ** (dprodId_comp, dprodId_uniq))
+dprodId_qeqv = ((dprodId, dprodId_pr) ** (dprodId_comp, dprodId_uniq))
 
 
 -- p[(u : P _ ** Q (_ ** u))]* w = (p[P]* (fst x) ** (dprodId (p ** Refl))[Q]* (snd x))
@@ -284,7 +284,7 @@ ap_fun p f g =
   let D : Dtype X
       D x y p = (f : A x -> B x) -> (g : A y -> B y) ->
         transport (\z => A z -> B z) p f =:= g <~> (a : A x) -> transport B p (f a) =:= g (transport A p a)
-  in J D (\_, _, _ => fun_qinv) p f g
+  in J D (\_, _, _ => fun_qeqv) p f g
 
 -- I don't know what this is and I don't know how to name it
 ap_fun_q : forall X. {A, B : X -> Type} -> {x, y : X} -> (p : x =:= y) -> (f : A x -> B x) -> (g : A y -> B y) ->
@@ -341,7 +341,7 @@ ap_dfun p f g =
               q : MkDPair {p = A} x a =:= MkDPair {p = A} y a'
               q = dprodId (p ** Refl)
           in transport Bhat q (f a) = g a'
-  in J D (\_, _, _ => fun_qinv) p f g
+  in J D (\_, _, _ => fun_qeqv) p f g
 
 ------------------------
 ---- IDENTITY TYPES ----
@@ -389,8 +389,8 @@ ap_uniq f (g ** (alpha, beta)) q =
       apu3 = believe_me () -- I swear it's true. Theorem 2.11.1
   in apu1 <> apu2 <> apu3
 
-ap_qinv : forall A, B. (f : A -> B) -> qinv f -> {a, a' : A} -> a =:= a' <~> f a =:= f a'
-ap_qinv f g = ((ap f, ap_inv f g) ** (ap_comp f g, ap_uniq f g))
+ap_qeqv : forall A, B. (f : A -> B) -> qinv f -> {a, a' : A} -> a =:= a' <~> f a =:= f a'
+ap_qeqv f g = ((ap f, ap_inv f g) ** (ap_comp f g, ap_uniq f g))
 
 transport_concatl : forall A. {a, x1, x2 : A} -> (p : x1 =:= x2) -> (q : a =:= x1) ->
   transport (\x => a =:= x) p q =:= q <> p
@@ -433,8 +433,8 @@ prod_uv (f, g) = rewrite eta f in rewrite eta g in Refl
 prod_vu : forall X. {A, B : Type} -> (f : X -> (A, B)) -> prod_vinu (prod_univ f) =:= f
 prod_vu f = funext (\x => uniq_prod (f x))
 
-prod_univ_qinv : forall X. {A, B : Type} -> (X -> (A, B)) <~> (X -> A, X -> B)
-prod_univ_qinv = ((prod_univ, prod_vinu) ** (prod_vu, prod_uv))
+prod_univ_qeqv : forall X. {A, B : Type} -> (X -> (A, B)) <~> (X -> A, X -> B)
+prod_univ_qeqv = ((prod_univ, prod_vinu) ** (prod_vu, prod_uv))
 
 
 -- Universal property for dependent products: ∀(x : X) (A x, B x) -> (∀(x : X) A x, ∀(x : X) B x)
@@ -453,8 +453,8 @@ dprod_uv (f, g) = rewrite eta f in rewrite eta g in Refl
 dprod_vu : forall X. {A, B : X -> Type} -> (f : (x : X) -> (A x, B x)) -> dprod_vinu (dprod_univ f) =:= f
 dprod_vu f = funext (\x => uniq_prod (f x))
 
-dprod_univ_qinv : forall X. {A, B : X -> Type} -> ((x : X) -> (A x, B x)) <~> ((x : X) -> A x, (x : X) -> B x)
-dprod_univ_qinv = ((dprod_univ, dprod_vinu) ** (dprod_vu, dprod_uv))
+dprod_univ_qeqv : forall X. {A, B : X -> Type} -> ((x : X) -> (A x, B x)) <~> ((x : X) -> A x, (x : X) -> B x)
+dprod_univ_qeqv = ((dprod_univ, dprod_vinu) ** (dprod_vu, dprod_uv))
 
 
 -- The axiom of choice: ∀(x : X), ∃(a : A x) s.t. P x a -> ∃(g : (x : X) -> A x) s.t. ∀(x : X), P x (g x)
@@ -477,6 +477,6 @@ ac_uniq : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
   (f : (x : X) -> (a : A x ** P x a)) -> ac_inv {P} (ac {P} f) =:= f
 ac_uniq f = funext (\x => uniq_dprod (f x))
 
-ac_qinv : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
+ac_qeqv : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
   ((x : X) -> (a : A x ** P x a)) <~> (g : (x : X) -> A x ** (x : X) -> P x (g x))
-ac_qinv = ((ac, ac_inv) ** (ac_uniq, ac_comp))
+ac_qeqv = ((ac, ac_inv) ** (ac_uniq, ac_comp))

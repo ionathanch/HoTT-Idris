@@ -105,5 +105,5 @@ fun_uniq : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g)
 fun_uniq p = J {A = (x : A) -> B x} (\f, g, p => funext (happly p) =:= p) fun_refl p
 
 -- f = g <~> f ~~ g
-fun_qinv : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (f =:= g) <~> (f ~~ g)
-fun_qinv = ((happly, funext) ** (fun_uniq, fun_comp))
+fun_qeqv : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (f =:= g) <~> (f ~~ g)
+fun_qeqv = ((happly, funext) ** (fun_uniq, fun_comp))
