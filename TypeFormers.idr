@@ -24,6 +24,7 @@
   Finally, we have the universal properties of these type formers.
 -}
 
+import TypeTheory
 import Homotopy
 import FunExt
 
@@ -416,6 +417,46 @@ transport_concat p q =
 ---- UNIVERSAL PROPERTIES ----
 ------------------------------
 
+-- Universal property for nondependent products : (X -> (A, B)) -> (X -> A, X -> B)
+prod_univ : forall X, A, B. (X -> (A, B)) -> (X -> A, X -> B)
+prod_univ f = (\x => fst (f x), \x => snd (f x))
+
+-- Quasi-inverse of prod_univ
+prod_vinu : forall X, A, B. (X -> A, X -> B) -> (X -> (A, B))
+prod_vinu (f, g) x = (f x, g x)
+
+-- The universal property for nondependent products is a quasi-equivalence
+
+prod_uv : forall X, A, B. (fg : (X -> A, X -> B)) -> prod_univ (prod_vinu fg) =:= fg
+prod_uv (f, g) = rewrite eta f in rewrite eta g in Refl
+
+prod_vu : forall X. {A, B : Type} -> (f : X -> (A, B)) -> prod_vinu (prod_univ f) =:= f
+prod_vu f = funext (\x => uniq_prod (f x))
+
+prod_univ_qinv : forall X. {A, B : Type} -> (X -> (A, B)) <~> (X -> A, X -> B)
+prod_univ_qinv = ((prod_univ, prod_vinu) ** (prod_vu, prod_uv))
+
+
+-- Universal property for dependent products: ∀(x : X) (A x, B x) -> (∀(x : X) A x, ∀(x : X) B x)
+dprod_univ : forall X. {A, B : X -> Type} -> ((x : X) -> (A x, B x)) -> ((x : X) -> A x, (x : X) -> B x)
+dprod_univ f = (\x => fst (f x), \x => snd (f x))
+
+-- Quasi-inverse of dprod_univ
+dprod_vinu : forall X. {A, B : X -> Type} -> ((x : X) -> A x, (x : X) -> B x) -> ((x : X) -> (A x, B x))
+dprod_vinu (f, g) x = (f x, g x)
+
+-- The universal property for dependent products is a quasi-equivalence
+
+dprod_uv : forall X. {A, B : X -> Type} -> (fg : ((x : X) -> A x, (x : X) -> B x)) -> dprod_univ (dprod_vinu fg) =:= fg
+dprod_uv (f, g) = rewrite eta f in rewrite eta g in Refl
+
+dprod_vu : forall X. {A, B : X -> Type} -> (f : (x : X) -> (A x, B x)) -> dprod_vinu (dprod_univ f) =:= f
+dprod_vu f = funext (\x => uniq_prod (f x))
+
+dprod_univ_qinv : forall X. {A, B : X -> Type} -> ((x : X) -> (A x, B x)) <~> ((x : X) -> A x, (x : X) -> B x)
+dprod_univ_qinv = ((dprod_univ, dprod_vinu) ** (dprod_vu, dprod_uv))
+
+
 -- The axiom of choice: ∀(x : X), ∃(a : A x) s.t. P x a -> ∃(g : (x : X) -> A x) s.t. ∀(x : X), P x (g x)
 ac : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
   (f : (x : X) -> (a : A x ** P x a)) -> (g : (x : X) -> A x ** (x : X) -> P x (g x))
@@ -430,19 +471,11 @@ ac_inv (g ** h) x = (g x ** h x)
 
 ac_comp : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
   (gh : (g : (x : X) -> A x ** (x : X) -> P x (g x))) -> ac {P} (ac_inv {P} gh) =:= gh
-ac_comp (g ** h) =
-  let etag : (\x => g x) =:= g
-      etag = Refl
-      etah : (\x => h x) =:= h
-      etah = Refl
-  in rewrite etag in rewrite etah in Refl
+ac_comp (g ** h) = rewrite eta g in rewrite eta h in Refl
 
 ac_uniq : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
   (f : (x : X) -> (a : A x ** P x a)) -> ac_inv {P} (ac {P} f) =:= f
-ac_uniq f =
-  let dprod_uniq : forall A. {P : A -> Type} -> (r : (a : A ** P a)) -> (fst r ** snd r) =:= r
-      dprod_uniq (a ** b) = Refl
-  in funext (\x => dprod_uniq (f x))
+ac_uniq f = funext (\x => uniq_dprod (f x))
 
 ac_qinv : forall X. {A : X -> Type} -> {P : (x : X) -> (a : A x) -> Type} ->
   ((x : X) -> (a : A x ** P x a)) <~> (g : (x : X) -> A x ** (x : X) -> P x (g x))

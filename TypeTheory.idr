@@ -4,9 +4,20 @@
   The constructions presented in this chapter are inherent to the type theory used
   (in this case, MLTT), but since we have inductive definitions available, we can
   build them up ourselves -- or rather, use Idris' Prelude definitions.
+  We do define projections for products using recursors and induction,
+  but in practice we will use the built-in `fst`, `snd` functions, or use
+  pattern-matching directly.
 -}
 
 %default total
+
+------------------------
+---- FUNCTION TYPES ----
+------------------------
+
+-- Uniqueness principle, i.e. η-equivalence
+eta : forall A. {B : A -> Type} -> (f : (a : A) -> B a) -> (\a => f a) === f
+eta f = Refl
 
 -----------------------
 ---- PRODUCT TYPES ----
@@ -20,10 +31,18 @@ rec_unit c () = c
 ind_unit : forall c. c () -> (x : Unit) -> c x
 ind_unit c () = c
 
+-- Uniqueness principle for Unit
+uniq_unit : (x : Unit) -> x === ()
+uniq_unit x = ind_unit {c = (\y => y === ())} Refl x
+
 
 -- Recursor for nondependent products
 rec_prod : forall c. (a -> b -> c) -> (a, b) -> c
 rec_prod g (a, b) = g a b
+
+-- Induction for nondependent products
+ind_prod : forall c. ((x : a) -> (y : b) -> c (x, y)) -> (x : (a, b)) -> c x
+ind_prod g (a, b) = g a b
 
 -- Projection functions for nondependent products
 pr1_prod : (a, b) -> a
@@ -32,9 +51,9 @@ pr1_prod = rec_prod (\a, b => a)
 pr2_prod : (a, b) -> b
 pr2_prod = rec_prod (\a, b => b)
 
--- Induction for nondependent products
-ind_prod : forall c. ((x : a) -> (y : b) -> c (x, y)) -> (x : (a, b)) -> c x
-ind_prod g (a, b) = g a b
+-- Uniqueness principle for nondependent products
+uniq_prod : (x : (a, b)) -> (fst x, snd x) === x
+uniq_prod x = ind_prod {c = \x => (fst x, snd x) === x} (\_, _ => Refl) x
 
 
 -- Recursor for dependent products
@@ -52,6 +71,11 @@ pr1_dprod = rec_dprod (\a, b => a)
 -- N.B. In ind_dprod, c = \p => b (pr1_dprod p)
 pr2_dprod : forall a, b. (p : (x : a ** b x)) -> b (pr1_dprod p)
 pr2_dprod = ind_dprod (\a, b => b)
+
+-- Uniqueness for dependent products
+uniq_dprod : forall a, b. (p : (x : a ** b x)) -> (fst p ** snd p) === p
+uniq_dprod p = ind_dprod {c = \p => (fst p ** snd p) === p} (\_, _ => Refl) p
+
 
 -- Type-theoretic axiom of choice:
 -- If for every x there is a y such that R(x, y), then there is an f such that for every x, R(x, f(x))

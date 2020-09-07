@@ -37,7 +37,6 @@ Some of these have been partially begun and show up as program holes in the abov
 
 * Section 2.1: Theorem 2.1.6 (EckmannHilton)
 * Sections 2.10, 2.12, 2.13
-* Section 2.15: Theorems 2.15.2 and 2.15.5
 * Section 3.8: Lemma 3.8.2 (ACqinvCP)
 * Section 3.11: Lemma 3.11.9 (ii)/Exercise 3.20 (contrFamilyCentre)
 
