@@ -5,6 +5,8 @@
 -}
 
 import Homotopy
+import TypeFormers
+import SetsLogic
 
 %default total
 
@@ -40,9 +42,24 @@ binvToQinv f ((g ** alpha), (h ** beta)) =
       alpha' x = gamma (f x) <> alpha x
   in MkDPair {a = B -> A} h (alpha', beta)
 
--- (iii) (e1, e2 : binv f) -> e1 = e2
--- We cannot prove this just yet
+-- (iii) isProp (binv f)
+-- Technique: Show that linv and rinv are propositions, then use prodIsProp
 
+-----------------------------
+---- CONTRACTIBLE FIBERS ----
+-----------------------------
+
+-- Definition : Fibre of a map over a point
+fib : {A, B : Type} -> (f : A -> B) -> (y : B) -> Type
+fib f y = (x : A ** f x =:= y)
+
+-- Definition: Contractible maps
+contr : forall A, B. (f : A -> B) -> Type
+contr f = (y : B) -> isContr (fib f y)
+
+---------------------
+---- EQUIVALENCE ----
+---------------------
 
 -- Definition: Equivalence of two types
 -- For now, we define equivalence as a bi-invertible map
@@ -74,3 +91,36 @@ equiv_trans (f ** a) (g ** b) =
 -- Transform a quasi-equivalence into an equivalence
 -- qeqToEquiv : forall A, B. A <~> B -> A =~= B
 qeqToEquiv ((f, g) ** (gf, fg)) = (f ** ((g ** gf), (g ** fg)))
+
+
+-- (i) qinf f -> contr f
+qinvToContr : forall A, B. (f : A -> B) -> qinv f -> contr f
+qinvToContr f (g ** (alpha, beta)) y =
+  let fibCentre : (x : A ** f x =:= y)
+      fibCentre = (g y ** beta y)
+      fibContr : (fibfy : (x : A ** f x =:= y)) -> fibCentre =:= fibfy
+      fibContr (x ** p) =
+        let gyx : g y =:= x
+            gyx = ap g (invert p) <> alpha x
+            fc1 : transport (\gy => f gy =:= y) gyx (beta y) =:= transport (\fx => fx =:= y) (ap f gyx) (beta y)
+            fc1 = transport_ap f {P = \fx => fx =:= y} gyx (beta y) in
+        let fc2 : transport (\fx => fx =:= y) (ap f gyx) (beta y) =:= invert (ap f gyx) <> beta y
+            fc2 = transport_concatr {a = y} (ap f gyx) (beta y)
+            fc3 : invert (ap f gyx) <> beta y =:= invert (ap f (ap g (invert p)) <> ap f (alpha x)) <> beta y
+            fc3 = ap invert (ap_distrib f (ap g (invert p)) (alpha x)) |> beta y
+            fc4 : invert (ap f (ap g (invert p)) <> ap f (alpha x)) <> beta y =:= invert (ap (f . g) (invert p) <> ap f (alpha x)) <> beta y
+            fc4 = ap (\q => invert (q <> ap f (alpha x))) (ap_concat g f (invert p)) |> beta y
+        in dprodId (gyx ** ?betayp)
+  in (fibCentre ** fibContr)
+
+
+-- (ii) contr f -> qinf f
+contrToQinv : forall A, B. (f : A -> B) -> contr f -> qinv f
+contrToQinv f contrF =
+  let g : B -> A
+      g y = fst (fst (contrF y))
+      gf : (x : A) -> g (f x) =:= x
+      gf x = ?ff
+      fg : (y : B) -> f (g y) =:= y
+      fg y = ?gg
+  in ?uhh
