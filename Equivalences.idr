@@ -77,20 +77,21 @@ qinvToContr f (g ** (alpha, beta)) y =
             fc4 = ap (\q => invert (q <> ap f (alpha x))) (ap_concat g f (invert p)) |> beta y
         in dprodId (gyx ** ?betayp)
   in (fibCentre ** fibContr)
+-}
 
 -- (ii) contr f -> qinf f
-contrToQinv : forall A, B. (f : A -> B) -> contr f -> qinv f
+contrToQinv : forall A, B. (f : A -> B) -> contr f -> (g : B -> A ** ((x : A) -> g (f x) =:= x, (y : B) -> f (g y) =:= y))
 contrToQinv f contrF =
-  let gyg : (y : B) -> (x : A ** f x =:= y)
-      gyg y = fst (contrF y)
-      g : B -> A
-      g y = fst (gyg y)
+  let g : B -> A
+      g y = fst (fst (contrF y))
       fg : (y : B) -> f (g y) =:= y
-      fg y = snd (gyg y)
-      --gf : (x : A) -> g (f x) =:= x
-      --gf x = ?gg
-  in (g ** (?gf, fg))
--}
+      fg y = snd (fst (contrF y))
+      gf : (x : A) -> g (f x) =:= x
+      gf x =
+        let p : (g (f x) ** fg (f x)) =:= MkDPair {p = \x' => f x' =:= f x} x Refl
+            p = invert ((snd (contrF (f x))) (g (f x) ** fg (f x))) <> (snd (contrF (f x))) (x ** Refl)
+        in fst (dprodId_pr p)
+  in MkDPair {a = B -> A} g (gf, fg)
 
 ---------------------
 ---- EQUIVALENCE ----
