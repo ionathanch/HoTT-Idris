@@ -5,6 +5,7 @@
 -}
 
 import Homotopy
+import FunExt
 import TypeFormers
 import SetsLogic
 
@@ -58,26 +59,26 @@ contr : forall A, B. (f : A -> B) -> Type
 contr f = (y : B) -> isContr (fib f y)
 
 -- (i) qinf f -> contr f
-{-
-qinvToContr : forall A, B. (f : A -> B) -> qinv f -> contr f
+qinvToContr : {A, B : Type} -> (f : A -> B) -> qinv f -> contr f
 qinvToContr f (g ** (alpha, beta)) y =
   let fibCentre : (x : A ** f x =:= y)
       fibCentre = (g y ** beta y)
       fibContr : (fibfy : (x : A ** f x =:= y)) -> fibCentre =:= fibfy
       fibContr (x ** p) =
-        let gyx : g y =:= x
-            gyx = ap g (invert p) <> alpha x
-            fc1 : transport (\gy => f gy =:= y) gyx (beta y) =:= transport (\fx => fx =:= y) (ap f gyx) (beta y)
-            fc1 = transport_ap f {P = \fx => fx =:= y} gyx (beta y) in
-        let fc2 : transport (\fx => fx =:= y) (ap f gyx) (beta y) =:= invert (ap f gyx) <> beta y
-            fc2 = transport_concatr {a = y} (ap f gyx) (beta y)
-            fc3 : invert (ap f gyx) <> beta y =:= invert (ap f (ap g (invert p)) <> ap f (alpha x)) <> beta y
+        let q : g y =:= x
+            q = ap g (invert p) <> alpha x
+            fc1 : transport (\x' => f x' =:= y) q (beta y) =:= transport (\y' => y' =:= y) (ap f q) (beta y)
+            fc1 = transport_ap f q (beta y)
+            fc2 : transport (\fx => fx =:= y) (ap f q) (beta y) =:= invert (ap f q) <> beta y
+            fc2 = transport_concatr {a = y} (ap f q) (beta y)
+            fc3 : invert (ap f q) <> beta y =:= invert (ap f (ap g (invert p)) <> ap f (alpha x)) <> beta y
             fc3 = ap invert (ap_distrib f (ap g (invert p)) (alpha x)) |> beta y
-            fc4 : invert (ap f (ap g (invert p)) <> ap f (alpha x)) <> beta y =:= invert (ap (f . g) (invert p) <> ap f (alpha x)) <> beta y
-            fc4 = ap (\q => invert (q <> ap f (alpha x))) (ap_concat g f (invert p)) |> beta y
-        in dprodId (gyx ** ?betayp)
-  in (fibCentre ** fibContr)
--}
+            fc4 : ap f (ap g (invert p)) =:= ap (f . g) (invert p)
+            fc4 = ap_concat g f (invert p)
+            fc5 : ap (f . g) (invert p) =:= invert (ap (f . g) p)
+            fc5 = ap_invert (f . g) p
+        in ?hmm --dprodId (q ** ?betayp)
+  in ?huh --(fibCentre ** fibContr)
 
 -- (ii) contr f -> qinf f
 contrToQinv : forall A, B. (f : A -> B) -> contr f -> (g : B -> A ** ((x : A) -> g (f x) =:= x, (y : B) -> f (g y) =:= y))
