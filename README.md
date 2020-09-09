@@ -9,7 +9,7 @@ According to [Pattern-Matching without K](https://dl.acm.org/doi/10.1145/2692915
 * TypeFormers: Chapter 2 - Sections 2.5 to 2.15
 * FunExt: Sections 2.9, 4.9, and 6.3 (TODO)
 * SetsLogic: Chapter 3
-* Equivalence: Second half of Section 2.4; Chapter 4 (TODO)
+* Equivalence: Second half of Section 2.4; Chapter 4
 
 ## Program holes
 
@@ -39,12 +39,16 @@ Some of these have been partially begun and show up as program holes in the abov
 * Sections 2.10, 2.12, 2.13
 * Section 3.8: Lemma 3.8.2 (ACqinvCP)
 * Section 3.11: Lemma 3.11.9 (ii)/Exercise 3.20 (contrFamilyCentre)
+* Section 4.3: Theorem 4.3.2
+* Section 4.4: Corollary 4.4.6
+* Sections 4.6 to 4.9
 
 These I do not plan on ever doing.
 
 * Section 2.11: Theorems 2.11.3 to 2.11.5
 * Section 2.14
 * Section 2.15: Equations 2.15.9 to 2.15.11
+* Sections 4.1 to 4.2
 
 ## Bonus content
 * PLFI: [Programming Language Foundations in Agda](https://plfa.github.io/), but in Idris. This only contains some of the sections I find interesting.

@@ -228,7 +228,7 @@ squash_qeqv propP =
   in logicalEquiv propP squash mkSquash unMkSquash
 
 puc : forall A. {P : A -> Type} -> ((x : A) -> isProp (P x)) -> ((x : A) -> Squash (P x)) -> (x : A) -> P x
-puc propP squashP x = (qeqFrom (squash_qeqv (propP x))) (squashP x)
+puc propP squashP x = (qeqvFrom (squash_qeqv (propP x))) (squashP x)
 
 -- Exercise 3.19
 --unsquashDec : (P : Nat -> Type) -> decTypeFam P -> Squash (n : Nat ** P n) -> (n : Nat ** P n)

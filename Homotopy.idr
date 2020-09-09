@@ -420,32 +420,16 @@ qeqv_trans ((c, d) ** (p, q)) ((f, g) ** (r, s)) =
   in ((fc, dg) ** (dgfc, fcdg))
 
 -- Get the "to" direction of the quasi-equivalence
-qeqTo : forall A, B. A <~> B -> (A -> B)
-qeqTo ((f, g) ** _) = f
+qeqvTo : forall A, B. A <~> B -> (A -> B)
+qeqvTo ((f, g) ** _) = f
 
 -- Get the "from" direction of the quasi-equivalence
-qeqFrom : forall A, B. A <~> B -> (B -> A)
-qeqFrom ((f, g) ** _) = g
+qeqvFrom : forall A, B. A <~> B -> (B -> A)
+qeqvFrom ((f, g) ** _) = g
 
--- Example: The quasi-inverse of id is id
-qinv_ident : forall A. qinv (id {a = A})
-qinv_ident = MkDPair {a = A -> A} id (\x => Refl, \x => Refl)
+-- Handy converters between quasi-invertibility proofs and quasi-equivalence proofs
+qinvToQeqv : forall A, B. (f : A -> B) -> qinv f -> A <~> B
+qinvToQeqv f (g ** (gf, fg)) = ((f, g) ** (gf, fg))
 
-
--- We introduce the notation for equivalence here (A ≃ B),
--- as well as the properties it should have as an equivalence relation,
--- but we do not define it concretely, leaving this for Equivalences.
-infix 5 =~=
-(=~=) : (A, B : Type) -> Type
-
--- Reflexivity: A ≃ A
-equiv_refl : forall A. A =~= A
-
--- Symmetry: If A ≃ B then B ≃ A
-equiv_sym : forall A, B. A =~= B -> B =~= A
-
--- Transitivity: If A ≃ B and B ≃ C then A ≃ C
-equiv_trans : forall A, B, C. A =~= B -> B =~= C -> A =~= C
-
--- Transform a quasi-equivalence into an equivalence
-qeqToEquiv : forall A, B. A <~> B -> A =~= B
+qeqvToQinv : forall A, B. A <~> B -> (f : A -> B ** qinv f)
+qeqvToQinv ((f, g) ** (gf, fg)) = (f ** (g ** (gf, fg)))

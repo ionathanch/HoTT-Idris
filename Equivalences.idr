@@ -1,7 +1,14 @@
 {-
   Chapter 4: Equivalences
 
-  For now, this contains only the second half of Section 2.4.
+  As opposed to the book, instead of using half-adjoint equivalences
+  as the canonical definition of equivalence, we will be using
+  contractible maps. We include the definition of bi-invertible maps
+  as well since they appear early in Chapter 2.
+  In practice, except when dealing directly with equivalences,
+  we should rarely need to invoke contractible maps to show equivalence.
+  Instead, we should either show quasi-equivalence, which be transformed
+  into an equivalence via `qeqvToEquiv`, or use Corollary 4.4.6.
 -}
 
 import Homotopy
@@ -159,32 +166,47 @@ contrEqvIsProp f = funIsProp (\y => isContrIsProp {A = fib f y})
 ---------------------
 
 -- Definition: Equivalence of two types
--- For now, we define equivalence as a bi-invertible map
+-- From now on, we define equivalence as a contractible map
 -- We will sometimes write f : A ≃ B for (f, e) : A ≃ B where f : A -> B,
 -- and g(a) for ((pr1 g) a) where g : A ≃ B
-a =~= b = (f : a -> b ** binv f)
+infix 5 =~=
+(=~=) : (A, B : Type) -> Type
+a =~= b = (f : a -> b ** contr f)
 
 -- Reflexivity: A ≃ A
--- equiv_refl : forall A. A =~= A
-equiv_refl = MkDPair {a = A -> A} id (MkDPair {a = A -> A} id (\_ => Refl), MkDPair {a = A -> A} id (\_ => Refl))
+equiv_refl : {A : Type} -> A =~= A
+equiv_refl =
+  let qinvf : (f : A -> A ** qinv f)
+      qinvf = qeqvToQinv qeqv_refl
+      f : A -> A
+      f = fst qinvf
+  in MkDPair {a = A -> A} f (qinvToContr f (snd qinvf))
 
 -- Symmetry: If A ≃ B then B ≃ A
--- equiv_sym : forall A, B. A =~= B -> B =~= A
-equiv_sym (f ** e) =
-  let (finv ** (alpha, beta)) = binvToQinv f e
-      einv = qinvToBinv finv (MkDPair {a = A -> B} f (beta, alpha))
-  in MkDPair {a = B -> A} finv einv
+equiv_sym : {A, B : Type} -> A =~= B -> B =~= A
+equiv_sym (f ** contrf) =
+  let qeqvf : A <~> B
+      qeqvf = qinvToQeqv f (contrToQinv f contrf)
+      qinvg : (g : B -> A ** qinv g)
+      qinvg = qeqvToQinv (qeqv_sym qeqvf)
+      g : B -> A
+      g = fst qinvg
+  in MkDPair {a = B -> A} g (qinvToContr g (snd qinvg))
 
 -- Transitivity: If A ≃ B and B ≃ C then A ≃ C
--- equiv_trans : forall A, B, C. A =~= B -> B =~= C -> A =~= C
-equiv_trans (f ** a) (g ** b) =
-  let (finv ** (finvf, ffinv)) = binvToQinv f a
-      (ginv ** (ginvg, gginv)) = binvToQinv g b
-      gffginv = \c => ap g (ffinv (ginv c)) <> gginv c
-      fginvgf = \a => ap finv (ginvg (f a)) <> finvf a
-      abinv = qinvToBinv (g . f) (MkDPair {a = C -> A} (finv . ginv) (fginvgf, gffginv))
-  in MkDPair {a = A -> C} (g . f) abinv
+equiv_trans : {A, B, C : Type} -> A =~= B -> B =~= C -> A =~= C
+equiv_trans (f ** contrf) (g ** contrg) =
+  let qeqvf : A <~> B
+      qeqvf = qinvToQeqv f (contrToQinv f contrf)
+      qeqvg : B <~> C
+      qeqvg = qinvToQeqv g (contrToQinv g contrg)
+      qinvh : (h : A -> C ** qinv h)
+      qinvh = qeqvToQinv (qeqv_trans qeqvf qeqvg)
+      h : A -> C
+      h = fst qinvh
+  in MkDPair {a = A -> C} h (qinvToContr h (snd qinvh))
 
 -- Transform a quasi-equivalence into an equivalence
--- qeqToEquiv : forall A, B. A <~> B -> A =~= B
-qeqToEquiv ((f, g) ** (gf, fg)) = (f ** ((g ** gf), (g ** fg)))
+qeqvToEquiv : {A, B : Type} -> A <~> B -> A =~= B
+qeqvToEquiv ((f, g) ** (gf, fg)) =
+  MkDPair {a = A -> B} f (qinvToContr f (MkDPair {a = B -> A} g (gf, fg)))

@@ -298,7 +298,7 @@ ap_fun_q : forall X. {A, B : X -> Type} -> {x, y : X} -> (p : x =:= y) -> (f : A
               j2 = ap (\p => transport A p a) (rightInv p)
           in ap (transport B p . f) (j1 <> j2)
       k : transport B p (f a) =:= g (transport A p a)
-      k = (qeqTo (ap_fun p f g)) q a
+      k = (qeqvTo (ap_fun p f g)) q a
   in happly q (transport A p a) =:= i <> j <> k
 ap_fun_q p f g q a =
   let D : Dtype X
@@ -312,7 +312,7 @@ ap_fun_q p f g q a =
                     j2 = ap (\p => transport A p a) (rightInv p)
                 in ap (transport B p . f) (j1 <> j2)
             k : transport B p (f a) =:= g (transport A p a)
-            k = (qeqTo (ap_fun p f g)) q a
+            k = (qeqvTo (ap_fun p f g)) q a
         in happly q (transport A p a) =:= i <> j <> k
       d : (x : X) -> (f, g : A x -> B x) -> (q : f =:= g) -> (a : A x) ->
         happly q a =:= happly (funext {f = f} {g = f} (\_ => Refl)) a <> happly q a
