@@ -70,6 +70,27 @@ fibId f y (x ** p) (x' ** p') (gamma ** pp') =
       pp5 = pp3 <> pp4 <> (invert pp2)
   in dprodId (gamma ** pp5)
 
+-- (x, p) = (x', p') -> ∃(γ : x = x') s.t. f(γ) · p' = p
+fibId_elim : forall A, B. (f : A -> B) -> (y : B) -> (xp, xp' : fib f y) ->
+  xp =:= xp' -> (gamma : (fst xp) =:= (fst xp') ** ap f gamma <> (snd xp') =:= snd xp)
+fibId_elim f y (x ** p) (x' ** p') q =
+  let gamma : x =:= x'
+      gamma = fst (dprodId_pr q)
+      pp' : transport (\x => f x =:= y) gamma p =:= p'
+      pp' = snd (dprodId_pr q)
+      pp1 : transport (\x => f x =:= y) gamma p =:= transport (\y' => y' =:= y) (ap f gamma) p
+      pp1 = transport_ap f gamma p
+      pp2 : transport (\y' => y' =:= y) (ap f gamma) p =:= (invert (ap f gamma)) <> p
+      pp2 = transport_concatr (ap f gamma) p
+      pp3 : (invert (ap f gamma)) <> p =:= p'
+      pp3 = invert ((invert pp') <> pp1 <> pp2)
+      pp4 : p =:= ap f gamma <> (invert (ap f gamma) <> p)
+      pp4 = (invert (rightInv (ap f gamma)) |> p) <> invert (associativity (ap f gamma) (invert (ap f gamma)) p)
+      pp5 : ap f gamma <> p' =:= p
+      pp5 = invert (pp4 <> (ap f gamma <| pp3))
+  in (gamma ** pp5)
+
+
 -- Definition: Contractible maps
 contr : forall A, B. (f : A -> B) -> Type
 contr f = (y : B) -> isContr (fib f y)
