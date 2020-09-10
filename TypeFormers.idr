@@ -217,6 +217,21 @@ ap_dprod g h p =
       D x y p = ap (\z => (g z ** h z)) p =:= dprodId {P} (ap g p ** invert (transport_ap g {P} p (h x)) <> apd h p)
   in J D (\_ => Refl) p
 
+
+-- Associativity of dependent products: (x : A ** (y : B x ** C (x ** y))) <~> (p : (x : A ** B x) ** C p)
+dprod_assoc : forall A. {B : A -> Type} -> {C : (x : A ** B x) -> Type} ->
+  (x : A ** (y : B x ** C (x ** y))) <~> (p : (x : A ** B x) ** C p)
+dprod_assoc =
+  let f : (x : A ** (y : B x ** C (x ** y))) -> (p : (x : A ** B x) ** C p)
+      f (x ** (y ** p)) = ((x ** y) ** p)
+      g : (p : (x : A ** B x) ** C p) -> (x : A ** (y : B x ** C (x ** y)))
+      g ((x ** y) ** p) = (x ** (y ** p))
+      gf : (w : (x : A ** (y : B x ** C (x ** y)))) -> g (f w) =:= w
+      gf (x ** (y ** p)) = Refl
+      fg : (w : (p : (x : A ** B x) ** C p)) -> f (g w) =:= w
+      fg ((x ** y) ** p) = Refl
+  in ((f, g) ** (gf, fg))
+
 -------------------
 ---- UNIT TYPE ----
 -------------------

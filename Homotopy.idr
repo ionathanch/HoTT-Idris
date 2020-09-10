@@ -392,6 +392,7 @@ hom_commute hom a =
 qinv : forall A, B. (f : A -> B) -> Type
 qinv f = (g : B -> A ** (g . f ~~ id {a = A}, f . g ~~ id {a = B}))
 
+
 -- Definition: Quasi-equivalence
 -- A <~> B := ∃(f : A -> B) s.t. qinv(f)
 infix 4 <~>
@@ -419,6 +420,7 @@ qeqv_trans ((c, d) ** (p, q)) ((f, g) ** (r, s)) =
       fcdg c = ap f (q (g c)) <> s c
   in ((fc, dg) ** (dgfc, fcdg))
 
+
 -- Get the "to" direction of the quasi-equivalence
 qeqvTo : forall A, B. A <~> B -> (A -> B)
 qeqvTo ((f, g) ** _) = f
@@ -433,3 +435,18 @@ qinvToQeqv f (g ** (gf, fg)) = ((f, g) ** (gf, fg))
 
 qeqvToQinv : forall A, B. A <~> B -> (f : A -> B ** qinv f)
 qeqvToQinv ((f, g) ** (gf, fg)) = (f ** (g ** (gf, fg)))
+
+
+-- A specific transport-like lemma for quasi-equivalence that we'll need later
+qeqv_transport : forall A. {B : A -> Type} -> {P, Q : (a : A) -> B a -> Type} ->
+  ((a : A) -> (u : B a) -> P a u <~> Q a u) -> ((a : A ** (u : B a ** P a u)) <~> (a : A ** (u : B a ** Q a u)))
+qeqv_transport h =
+  let f : (a : A ** (u : B a ** P a u)) -> (a : A ** (u : B a ** Q a u))
+      f (a ** (u ** p)) = (a ** (u ** (fst (fst (h a u))) p))
+      g : (a : A ** (u : B a ** Q a u)) -> (a : A ** (u : B a ** P a u))
+      g (a ** (u ** q)) = (a ** (u ** (snd (fst (h a u))) q))
+      gf : (aup : (a : A ** (u : B a ** P a u))) -> g (f aup) =:= aup
+      gf (a ** (u ** p)) = ap (\p => (a ** (u ** p))) ((fst (snd (h a u))) p)
+      fg : (auq : (a : A ** (u : B a ** Q a u))) -> f (g auq) =:= auq
+      fg (a ** (u ** q)) = ap (\q => (a ** (u ** q))) ((snd (snd (h a u))) q)
+  in ((f, g) ** (gf, fg))

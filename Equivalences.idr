@@ -110,8 +110,8 @@ qinvToContr f (g ** (alpha, beta)) y =
       tau : (a : A) -> beta' (f a) =:= ap f (alpha a)
       tau a =
         let tau1 : ap f (alpha (g (f a))) =:= ap (f . g . f) (alpha a)
-            tau1 = ap (ap f) (hom_commute alpha a) <> ap_concat (g . f) f (alpha a) in
-        let tau2 : ap (f . g . f) (alpha a) <> beta (f a) =:= beta (f (g (f a))) <> ap f (alpha a)
+            tau1 = ap (ap f) (hom_commute alpha a) <> ap_concat (g . f) f (alpha a)
+            tau2 : ap (f . g . f) (alpha a) <> beta (f a) =:= beta (f (g (f a))) <> ap f (alpha a)
             tau2 = invert (naturality (\a => beta (f a)) (alpha a))
             tau3 : ap f (alpha (g (f a))) <> beta (f a) =:= beta (f (g (f a))) <> ap f (alpha a)
             tau3 = (tau1 |> beta (f a)) <> tau2
@@ -210,3 +210,30 @@ equiv_trans (f ** contrf) (g ** contrg) =
 qeqvToEquiv : {A, B : Type} -> A <~> B -> A =~= B
 qeqvToEquiv ((f, g) ** (gf, fg)) =
   MkDPair {a = A -> B} f (qinvToContr f (MkDPair {a = B -> A} g (gf, fg)))
+
+-------------------------------
+---- FIBREWISE EQUIVALENCE ----
+-------------------------------
+
+{-
+  Some terminology:
+  * A fibration with base space A is a type family P : A -> Type
+  * The total space of a fibration P is ∃(x : A) s.t. P x
+  * A fibrewise map between fibrations P and Q is a function f : ∀(x : A), P x -> Q x
+-}
+
+-- A function on total spaces induced by a fibrewise map
+fmap : forall A. {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> (x : A ** P x) -> (x : A ** Q x)
+fmap f (x ** px) = (x ** f x px)
+
+fmap_qeqv : forall A. {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> (x : A) -> (v : Q x) -> fib (fmap f) (x ** v) <~> fib (f x) v
+fmap_qeqv f x v =
+  let C : (x : A ** P x) -> Type
+      C w = (fst w ** (f (fst w) (snd w))) =:= MkDPair {p = Q} x v
+      fmap1 : (w : (x : A ** P x) ** (MkDPair {p = Q} (fst w) (f (fst w) (snd w))) =:= (x ** v)) <~> (a : A ** (u : P a ** (a ** f a u) =:= (x ** v)))
+      fmap1 = qeqv_sym (dprod_assoc {A} {B = P} {C}) in
+  let fmap2 : (a : A) -> (u : P a) -> (a ** f a u) =:= (x ** v) <~> (p : a =:= x ** transport Q p (f a u) =:= v)
+      fmap2 a u = qeqv_sym (dprodId_qeqv {a} {a' = x} {b = f a u} {b' = v})
+      fmap3 : (a : A ** (u : P a ** (a ** f a u) =:= (x ** v))) <~> (a : A ** (u : P a ** (p : a =:= x ** transport Q p (f a u) =:= v)))
+      fmap3 = qeqv_transport {A} {B = P} fmap2
+  in ?feq
