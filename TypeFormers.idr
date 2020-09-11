@@ -232,6 +232,20 @@ dprod_assoc =
       fg ((x ** y) ** p) = Refl
   in ((f, g) ** (gf, fg))
 
+-- Commutativity of dependent products: (x : A ** (y : B x ** (z : C x ** D x y z))) <~> (x : A ** (z : C x ** (y : B x ** D x y z)))
+dprod_comm : forall A. {B, C : A -> Type} -> {D : (a : A) -> B a -> C a -> Type} ->
+  (x : A ** (y : B x ** (z : C x ** D x y z))) <~> (x : A ** (z : C x ** (y : B x ** D x y z)))
+dprod_comm =
+  let f : (x : A ** (y : B x ** (z : C x ** D x y z))) -> (x : A ** (z : C x ** (y : B x ** D x y z)))
+      f (x ** (y ** (z ** w))) = (x ** (z ** (y ** w)))
+      g : (x : A ** (z : C x ** (y : B x ** D x y z))) -> (x : A ** (y : B x ** (z : C x ** D x y z)))
+      g (x ** (z ** (y ** w))) = (x ** (y ** (z ** w)))
+      gf : (w : (x : A ** (y : B x ** (z : C x ** D x y z)))) -> g (f w) =:= w
+      gf (x ** (y ** (z ** w))) = Refl
+      fg : (w : (x : A ** (z : C x ** (y : B x ** D x y z)))) -> f (g w) =:= w
+      fg (x ** (z ** (y ** w))) = Refl
+  in ((f, g) ** (gf, fg))
+
 -------------------
 ---- UNIT TYPE ----
 -------------------

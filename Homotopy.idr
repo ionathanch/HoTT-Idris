@@ -420,6 +420,11 @@ qeqv_trans ((c, d) ** (p, q)) ((f, g) ** (r, s)) =
       fcdg c = ap f (q (g c)) <> s c
   in ((fc, dg) ** (dgfc, fcdg))
 
+-- Convenient infix form for qeqv_trans
+infixr 8 <->
+(<->) : forall A, C, B. A <~> B -> B <~> C -> A <~> C
+(<->) = qeqv_trans
+
 
 -- Get the "to" direction of the quasi-equivalence
 qeqvTo : forall A, B. A <~> B -> (A -> B)
@@ -435,6 +440,11 @@ qinvToQeqv f (g ** (gf, fg)) = ((f, g) ** (gf, fg))
 
 qeqvToQinv : forall A, B. A <~> B -> (f : A -> B ** qinv f)
 qeqvToQinv ((f, g) ** (gf, fg)) = (f ** (g ** (gf, fg)))
+
+-- Convert equality to quasi-equivalence
+eqToQeqv : {A, B : Type} -> A =:= B -> A <~> B
+eqToQeqv p =
+  J (\x, y, _ => x <~> y) (\_ => qeqv_refl) p
 
 
 -- A specific transport-like lemma for quasi-equivalence that we'll need later

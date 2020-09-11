@@ -226,20 +226,32 @@ qeqvToEquiv ((f, g) ** (gf, fg)) =
 fmap : forall A. {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> (x : A ** P x) -> (x : A ** Q x)
 fmap f (x ** px) = (x ** f x px)
 
-fmap_qeqv : forall A. {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> (x : A) -> (v : Q x) -> fib (fmap f) (x ** v) <~> fib (f x) v
-fmap_qeqv f x v =
-  let C : (x : A ** P x) -> Type
-      C w = MkDPair {p = Q} (fst w) (f (fst w) (snd w)) =:= MkDPair {p = Q} x v
-      fmap1 : (w : (x : A ** P x) ** MkDPair {a = A} {p = Q} (fst w) (f (fst w) (snd w)) =:= (x ** v)) <~> (a : A ** (u : P a ** (a ** f a u) =:= (x ** v)))
-      fmap1 = qeqv_sym dprod_assoc
-      fmap2 : (a : A) -> (u : P a) -> (a ** f a u) =:= (x ** v) <~> (p : a =:= x ** transport Q p (f a u) =:= v)
-      fmap2 a u = qeqv_sym dprodId_qeqv
-      fmap3 : (a : A ** (u : P a ** (a ** f a u) =:= (x ** v))) <~> (a : A ** (u : P a ** (p : a =:= x ** transport Q p (f a u) =:= v)))
-      fmap3 = qeqv_transport fmap2
+-- Uniqueness of dependent products applied to fmap
+fmap_uniq : forall A. {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> (w : (x : A ** P x)) -> fmap f w =:= (fst w ** f (fst w) (snd w))
+fmap_uniq f (x ** px) = Refl
 
-      fmap5 : (a : A ** (p : a =:= x ** (u : P a ** transport Q p (f a u) =:= v))) <~> (w : (a : A ** a =:= x) ** (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v))
-      fmap5 = dprod_assoc
-      -- singRightIsContr : forall A. (x : A) -> isContr (a : A ** a =:= x)
-      -- fmap6 : (w : (a : A ** a =:= x) ** (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v)) <~> (u : P x ** transport Q id (f x u) =:= v)
-      -- fmap6 = contrFamilyCentre {A = (a : A ** a =:= x)} {P = \w => (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v)} (?singRightIsContr x)
-  in ?feq
+-- fib (fmap f) (x ** v) <~> fib (f x) v
+fmap_qeqv : {A : Type} -> {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> (x : A) -> (v : Q x) -> fib (fmap f) (x ** v) <~> fib (f x) v
+fmap_qeqv f x v =
+  let fibfmapf : fib (fmap f) (x ** v) =:= (w : (x : A ** P x) ** MkDPair {a = A} {p = Q} (fst w) (f (fst w) (snd w)) =:= (x ** v))
+      fibfmapf = ap (\f => fib f (x ** v)) (funext (fmap_uniq f))
+      --fmap0 : fib (fmap f) (x ** v) <~> (w : (x : A ** P x) ** MkDPair {a = A} {p = Q} (fst w) (f (fst w) (snd w)) =:= (x ** v))
+      --fmap0 = eqToQeqv fibfmapf
+      --fmap1 : (w : (x : A ** P x) ** MkDPair {a = A} {p = Q} (fst w) (f (fst w) (snd w)) =:= (x ** v)) <~> (a : A ** (u : P a ** (a ** f a u) =:= (x ** v)))
+      --fmap1 = qeqv_sym dprod_assoc
+      --fmap2 : (a : A) -> (u : P a) -> (a ** f a u) =:= (x ** v) <~> (p : a =:= x ** transport Q p (f a u) =:= v)
+      --fmap2 a u = qeqv_sym dprodId_qeqv
+      --fmap3 : (a : A ** (u : P a ** (a ** f a u) =:= (x ** v))) <~> (a : A ** (u : P a ** (p : a =:= x ** transport Q p (f a u) =:= v)))
+      --fmap3 = qeqv_transport fmap2
+      --fmap4 : (a : A ** (u : P a ** (p : a =:= x ** transport Q p (f a u) =:= v))) <~> (a : A ** (p : a =:= x ** (u : _ ** transport Q p (f a u) =:= v)))
+      --fmap4 = dprod_comm
+      --fmap5 : (a : A ** (p : a =:= x ** (u : _ ** transport Q p (f a u) =:= v))) <~> (w : (a : A ** a =:= x) ** (u : _ ** transport Q (snd w) (f (fst w) u) =:= v))
+      --fmap5 = dprod_assoc
+      --contrSingle : (w : (a : A ** a =:= x) ** (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v)) <~> (u : P x ** f x u =:= v)
+      --contrSingle = contrFamilyCentre (singleRightIsContr x)
+  in eqToQeqv fibfmapf
+      <-> qeqv_sym dprod_assoc
+      <-> qeqv_transport (\_, _ => qeqv_sym dprodId_qeqv)
+      <-> dprod_comm
+      <-> dprod_assoc
+      <-> contrFamilyCentre {A = (a : A ** a =:= x)} {P = \w => (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v)} (singleRightIsContr x)

@@ -286,13 +286,22 @@ unitIsContr : isContr Unit
 unitIsContr = MkDPair () (\() => Refl)
 
 -- ∃(x : A) s.t. a = x is contractible
-singletonIsContr : forall A. (a : A) -> isContr (x : A ** a =:= x)
-singletonIsContr a =
+singleLeftIsContr : forall A. (a : A) -> isContr (x : A ** a =:= x)
+singleLeftIsContr a =
   let centre : (x : A ** a =:= x)
       centre = (a ** Refl)
       centreEq : (xp : (x : A ** a =:= x)) -> centre =:= xp
       centreEq (x ** p) = dprodId (p ** transport_concatl p Refl)
   in (centre ** centreEq)
+
+-- ∃(x : A) s.t. x = a is contractible
+singleRightIsContr : forall A. (a : A) -> isContr (x : A ** x =:= a)
+singleRightIsContr a =
+  let centre : (x : A ** x =:= a)
+      centre = (a ** Refl)
+      contrCentre : (xp : (x : A ** x =:= a)) -> centre =:= xp
+      contrCentre (x ** p) = invert (dprodId (p ** transport_concatr p p <> leftInv p))
+  in (centre ** contrCentre)
 
 
 -- B is a retract of A if
