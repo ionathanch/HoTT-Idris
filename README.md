@@ -41,14 +41,15 @@ Some of these have been partially begun and show up as program holes in the abov
 * Section 3.11: Lemma 3.11.9 (ii)/Exercise 3.20 (contrFamilyCentre)
 * Section 4.3: Theorem 4.3.2
 * Section 4.4: Corollary 4.4.6
-* Sections 4.6 to 4.9
+* Section 4.9
 
 These I do not plan on ever doing.
 
 * Section 2.11: Theorems 2.11.3 to 2.11.5
 * Section 2.14
 * Section 2.15: Equations 2.15.9 to 2.15.11
-* Sections 4.1 to 4.2
+* Sections 4.1 to 4.2, 4.6, 4.8
+* Section 4.7: Theorems 4.7.1 to 4.7.4
 
 ## Bonus content
 * PLFI: [Programming Language Foundations in Agda](https://plfa.github.io/), but in Idris. This only contains some of the sections I find interesting.

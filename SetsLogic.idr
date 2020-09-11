@@ -95,7 +95,7 @@ isSetIsProp f g =
   in funext (\x => funext (\y => funext (\p => funext (fgxypq x y p))))
 
 -- Products of propositions are propositions
--- Weird bug: Idris won't let me use isProp A and isProp B
+-- Idris bug: It won't let me use isProp A and isProp B
 prodIsProp : forall A, B. ((a, a' : A) -> a =:= a') -> ((b, b' : B) -> b =:= b') -> isProp (A, B)
 prodIsProp f g (a, b) (a', b') = prodId (f a a', g b b')
 

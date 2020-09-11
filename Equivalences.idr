@@ -220,6 +220,7 @@ qeqvToEquiv ((f, g) ** (gf, fg)) =
   * A fibration with base space A is a type family P : A -> Type
   * The total space of a fibration P is ∃(x : A) s.t. P x
   * A fibrewise map between fibrations P and Q is a function f : ∀(x : A), P x -> Q x
+  * A fibrewise map f : ∀(x : A), P x -> Q x is a fibrewise equivalence if ∀(x : A), f x is an equivalence
 -}
 
 -- A function on total spaces induced by a fibrewise map
@@ -243,3 +244,15 @@ fmap_qeqv f x v =
       <-> dprod_comm
       <-> dprod_assoc
       <-> contrSingle
+
+-- A <~> B -> isContr A <-> isContr B (reverse direction follows by symmetry)
+-- Idris bug: Type checking fails when this is moved to SetsLogic
+qeqvToContr : forall A, B. A <~> B -> isContr A -> isContr B
+qeqvToContr ((f, g) ** (gf, fg)) (a ** contrA) =
+  let contrB : (y : B) -> f a =:= y
+      contrB y = ap f (contrA (g y)) <> fg y
+  in (f a ** contrB)
+
+-- If (fmap f) is an equivalence then ∀(x : A), (f x) are equivalences
+fmap_contr : {A : Type} -> {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> contr (fmap f) -> (x : A) -> contr (f x)
+fmap_contr f contrFmap x v = qeqvToContr (fmap_qeqv f x v) (contrFmap (x ** v))
