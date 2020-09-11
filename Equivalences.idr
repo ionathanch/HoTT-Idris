@@ -229,11 +229,17 @@ fmap f (x ** px) = (x ** f x px)
 fmap_qeqv : forall A. {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> (x : A) -> (v : Q x) -> fib (fmap f) (x ** v) <~> fib (f x) v
 fmap_qeqv f x v =
   let C : (x : A ** P x) -> Type
-      C w = (fst w ** (f (fst w) (snd w))) =:= MkDPair {p = Q} x v
-      fmap1 : (w : (x : A ** P x) ** (MkDPair {p = Q} (fst w) (f (fst w) (snd w))) =:= (x ** v)) <~> (a : A ** (u : P a ** (a ** f a u) =:= (x ** v)))
-      fmap1 = qeqv_sym (dprod_assoc {A} {B = P} {C}) in
-  let fmap2 : (a : A) -> (u : P a) -> (a ** f a u) =:= (x ** v) <~> (p : a =:= x ** transport Q p (f a u) =:= v)
-      fmap2 a u = qeqv_sym (dprodId_qeqv {a} {a' = x} {b = f a u} {b' = v})
+      C w = MkDPair {p = Q} (fst w) (f (fst w) (snd w)) =:= MkDPair {p = Q} x v
+      fmap1 : (w : (x : A ** P x) ** MkDPair {a = A} {p = Q} (fst w) (f (fst w) (snd w)) =:= (x ** v)) <~> (a : A ** (u : P a ** (a ** f a u) =:= (x ** v)))
+      fmap1 = qeqv_sym dprod_assoc
+      fmap2 : (a : A) -> (u : P a) -> (a ** f a u) =:= (x ** v) <~> (p : a =:= x ** transport Q p (f a u) =:= v)
+      fmap2 a u = qeqv_sym dprodId_qeqv
       fmap3 : (a : A ** (u : P a ** (a ** f a u) =:= (x ** v))) <~> (a : A ** (u : P a ** (p : a =:= x ** transport Q p (f a u) =:= v)))
-      fmap3 = qeqv_transport {A} {B = P} fmap2
+      fmap3 = qeqv_transport fmap2
+
+      fmap5 : (a : A ** (p : a =:= x ** (u : P a ** transport Q p (f a u) =:= v))) <~> (w : (a : A ** a =:= x) ** (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v))
+      fmap5 = dprod_assoc
+      -- singRightIsContr : forall A. (x : A) -> isContr (a : A ** a =:= x)
+      -- fmap6 : (w : (a : A ** a =:= x) ** (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v)) <~> (u : P x ** transport Q id (f x u) =:= v)
+      -- fmap6 = contrFamilyCentre {A = (a : A ** a =:= x)} {P = \w => (u : P (fst w) ** transport Q (snd w) (f (fst w) u) =:= v)} (?singRightIsContr x)
   in ?feq
