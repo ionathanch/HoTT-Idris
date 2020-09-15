@@ -256,3 +256,41 @@ qeqvToContr ((f, g) ** (gf, fg)) (a ** contrA) =
 -- If (fmap f) is an equivalence then ∀(x : A), (f x) are equivalences
 fmap_contr : {A : Type} -> {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> contr (fmap f) -> (x : A) -> contr (f x)
 fmap_contr f contrFmap x v = qeqvToContr (fmap_qeqv f x v) (contrFmap (x ** v))
+
+
+-- If A, B are contractible, then (f : A -> B) is a contractible map
+funContr : forall A, B. isContr A -> isContr B -> (f : A -> B) -> contr f
+funContr (a ** contrA) (b ** contrB) f y =
+  let c : (x : A ** f x =:= y)
+      c = (a ** invert (contrB (f a)) <> contrB y)
+      contrC : (c' : (x : A ** f x =:= y)) -> c = c'
+      contrC (x ** contrX) =
+        let fxy : transport (\x => f x =:= y) (contrA x) (snd c) =:= contrX
+            fxy = propIsSet (contrIsProp (b ** contrB)) (f x) y (transport (\x => f x =:= y) (contrA x) (snd c)) contrX
+        in dprodId (contrA x ** fxy)
+  in (c ** contrC)
+
+-- (happly f g) is an equivalence
+happly_contr : {A : Type} -> {P : A -> Type} -> (f, g : (x : A) -> P x) -> contr (happly {f} {g})
+happly_contr f g =
+  let Q : ((x : A) -> P x) -> Type
+      Q g = (x : A) -> f x =:= g x
+      fmap_happly : (g : (x : A) -> P x ** f =:= g) -> (g : (x : A) -> P x ** f ~~ g)
+      fmap_happly = fmap {Q} (\g => happly {f} {g})
+      fe1 : isContr ((x : A) -> (u : P x ** f x =:= u))
+      fe1 = funIsContr (\x => singleLeftIsContr (f x))
+      fe2 : isContr (g : (x : A) -> P x ** f ~~ g)
+      fe2 = qeqvToContr ac_qeqv fe1
+      fe3 : contr fmap_happly
+      fe3 = funContr (singleLeftIsContr f) fe2 fmap_happly
+  in fmap_contr {Q} (\g => happly {f} {g}) fe3 g
+
+-- f =:= g and f ~~ g are equivalent
+fun_eqv : {A : Type} -> {P : A -> Type} -> (f, g : (x : A) -> P x) -> (f =:= g) =~= (f ~~ g)
+fun_eqv f g = MkDPair {a = f =:= g -> f ~~ g} (happly {f} {g}) (happly_contr f g)
+
+-- Naïve functional extensionality as obtained from the equivalence
+-- This isn't definitionally equal to funext, so the homotopies between happly and funext'
+-- from the quasi-equivalence below won't apply to funext
+funext' : {A : Type} -> {B : A -> Type} -> {f, g : (x : A) -> B x} -> f ~~ g -> f =:= g
+funext' = fst (contrToQinv (happly {f} {g}) (happly_contr f g))

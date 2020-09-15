@@ -277,7 +277,7 @@ prodIsContr (a ** contrA) (b ** contrB) =
       contrAB (a', b') = prodId (contrA a', contrB b')
   in ((a, b) ** contrAB)
 
--- Functions to contractible types are constractible
+-- Functions to contractible types are contractible
 funIsContr : forall A. {P : A -> Type} -> ((a : A) -> isContr (P a)) -> isContr ((x : A) -> P x)
 funIsContr contrP = propIsContr (\x => fst (contrP x)) (funIsProp (\a => contrIsProp (contrP a)))
 
