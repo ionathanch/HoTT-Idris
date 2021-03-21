@@ -21,7 +21,7 @@
 -- Redefine homogenous equality with a lower infixity
 -- so that it binds /less/ tightly than <>
 infix 7 =:=
-(=:=) : (x : a) -> (y : a) -> Type
+(=:=) : forall A. (x, y: A) -> Type
 (=:=) = (===)
 
 -- Path induction family type
@@ -54,10 +54,10 @@ invert p = J (\x, y, _ => y =:= x) (\_ => Refl) p
 
 -- Transitivity: If x = y and y = z then x = z
 infixr 8 <>
-(<>) : forall A. {x, y, z : A} -> x =:= y -> y =:= z -> x =:= z
+(<>) : {A : Type} -> {x, y, z : A} -> x =:= y -> y =:= z -> x =:= z
 p <> q =
   let D : Dtype A
-      D x y _ = (z : A) -> y = z -> x = z
+      D x y _ = (z : A) -> y =:= z -> x =:= z
   in J D (\_, _, r => r) p z q
 
 {-
@@ -78,27 +78,27 @@ p <> q =
 
 
 -- p = Refl · p
-leftId : forall A. {x, y : A} -> (p : x =:= y) -> p =:= Refl <> p
+leftId : {A : Type} -> {x, y : A} -> (p : x =:= y) -> p =:= Refl <> p
 leftId p = J (\_, _, p => p =:= Refl <> p) (\_ => Refl) p
 
 -- p = p · Refl
-rightId : forall A. {x, y : A} -> (p : x =:= y) -> p =:= p <> Refl
+rightId : {A : Type} -> {x, y : A} -> (p : x =:= y) -> p =:= p <> Refl
 rightId p = J (\_, _, p => p =:= p <> Refl) (\_ => Refl) p
 
 -- Refl · p = p · Refl
-leftrightId : forall A. {x, y : A} -> (p : x =:= y) -> Refl <> p =:= p <> Refl
+leftrightId : {A : Type} -> {x, y : A} -> (p : x =:= y) -> Refl <> p =:= p <> Refl
 leftrightId p = invert (leftId p) <> rightId p
 
 -- p · Refl = Refl · p
-rightleftId : forall A. {x, y : A} -> (p : x =:= y) -> p <> Refl =:= Refl <> p
+rightleftId : {A : Type} -> {x, y : A} -> (p : x =:= y) -> p <> Refl =:= Refl <> p
 rightleftId p = invert (rightId p) <> leftId p
 
 -- p⁻¹ · p = Refl
-leftInv : forall A. {x, y : A} -> (p : x =:= y) -> invert p <> p =:= Refl
+leftInv : {A : Type} -> {x, y : A} -> (p : x =:= y) -> invert p <> p =:= Refl
 leftInv p = J (\_, _, p => invert p <> p =:= Refl) (\_ => Refl) p
 
 -- p · p⁻¹ = Refl
-rightInv : forall A. {x, y : A} -> (p : x =:= y) -> p <> invert p =:= Refl
+rightInv : {A : Type} -> {x, y : A} -> (p : x =:= y) -> p <> invert p =:= Refl
 rightInv p = J (\_, _, p => p <> invert p =:= Refl) (\_ => Refl) p
 
 -- (p⁻¹)⁻¹ = p
@@ -106,7 +106,7 @@ invertibility : forall A. {x, y : A} -> (p : x =:= y) -> invert (invert p) =:= p
 invertibility p = J (\_, _, p => invert (invert p) =:= p) (\_ => Refl) p
 
 -- p · (q · r) = (p · q) · r
-associativity : forall A. {x, y, z, w : A} -> (p : x =:= y) -> (q : y =:= z) -> (r : z =:= w) ->
+associativity : {A : Type} -> {x, y, z, w : A} -> (p : x =:= y) -> (q : y =:= z) -> (r : z =:= w) ->
   p <> (q <> r) =:= (p <> q) <> r
 associativity p q r =
   let D : Dtype A
@@ -172,7 +172,7 @@ ap f p = J (\x, y, _ => f x =:= f y) (\_ => Refl) p
 
 
 -- f(p · q) = f(p) · f(q)
-ap_distrib : forall A, B. (f : A -> B) -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) ->
+ap_distrib : {A, B : Type} -> (f : A -> B) -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) ->
   ap f (p <> q) =:= ap f p <> ap f q
 ap_distrib f p q =
   let D : Dtype A
@@ -195,17 +195,17 @@ ap_ident p = J (\_, _, p => ap (id {a = A}) p =:= p) (\_ => Refl) p
 
 -- Right whisker: If p = q then p · r = q · r
 infixl 9 |>
-(|>) : forall A. {x, y, z : A} -> {p, q : x =:= y} -> (a : p =:= q) -> (r : y =:= z) -> p <> r =:= q <> r
+(|>) : {A : Type} -> {x, y, z : A} -> {p, q : x =:= y} -> (a : p =:= q) -> (r : y =:= z) -> p <> r =:= q <> r
 alpha |> r = ap (\s => s <> r) alpha
 
 -- Left whisker: If r = s then q · r = q · s
 infixr 9 <|
-(<|) : forall A. {x, y, z : A} -> {r, s : y =:= z} -> (q : x =:= y) -> (b : r =:= s) -> q <> r =:= q <> s
+(<|) : {A : Type} -> {x, y, z : A} -> {r, s : y =:= z} -> (q : x =:= y) -> (b : r =:= s) -> q <> r =:= q <> s
 q <| beta = ap (\p => q <> p) beta
 
 
 -- p · q = p · r -> q = r
-leftCancel : forall A. {x, y, z : A} -> (p : x =:= y) -> (q, r : y =:= z) ->
+leftCancel : {A : Type} -> {x, y, z : A} -> (p : x =:= y) -> (q, r : y =:= z) ->
   p <> q =:= p <> r -> q =:= r
 leftCancel p q r s =
   let t : invert p <> (p <> q) =:= invert p <> (p <> r)
@@ -219,7 +219,7 @@ leftCancel p q r s =
   in vl <> u <> vr
 
 -- p · r = q · r -> p = q
-rightCancel : forall A. {x, y, z : A} -> (p, q : x =:= y) -> (r : y =:= z) ->
+rightCancel : {A : Type} -> {x, y, z : A} -> (p, q : x =:= y) -> (r : y =:= z) ->
   p <> r = q <> r -> p = q
 rightCancel p q r s =
   let t : (p <> r) <> invert r =:= (q <> r) <> invert r
@@ -238,11 +238,11 @@ rightCancel p q r s =
 
 -- The indiscernibility of identicals, renamed
 -- We also write p* := transport P p for some implicit P, or p[P]* explicitly
-transport : forall A. (P : A -> Type) -> {x, y : A} -> (p : x =:= y) -> P x -> P y
+transport : {A : Type} -> (P : A -> Type) -> {x, y : A} -> (p : x =:= y) -> P x -> P y
 transport ptype p = J (\x, y, _ => ptype x -> ptype y) (\_, px => px) p
 
 -- Path lifting property
-lift : forall A. {P : A -> Type} -> (u : forall x. P x) -> {x, y : A} -> (p : x =:= y) ->
+lift : {A : Type} -> {P : A -> Type} -> (u : forall x. P x) -> {x, y : A} -> (p : x =:= y) ->
   MkDPair {p = P} x u =:= MkDPair {p = P} y (transport P p u)
 lift u p =
   let D : Dtype A
@@ -251,18 +251,18 @@ lift u p =
 
 -- Dependent ap, i.e. mapping over a path p with a dependent function f
 -- Similarly, we also write f(p) when it is clear that f is dependent
-apd : forall A. {P : A -> Type} -> (f : (a : A) -> P a) -> {x, y : A} -> (p : x =:= y) -> transport P p (f x) =:= f y
+apd : {A : Type} -> {P : A -> Type} -> (f : (a : A) -> P a) -> {x, y : A} -> (p : x =:= y) -> transport P p (f x) =:= f y
 apd f p = J (\x, y, p => transport P p (f x) =:= f y) (\_ => Refl) p
 
 -- Transporting in a constant family type P := (\_ => B) does nothing
-transportConst : forall A. (B : Type) -> {x, y : A} -> (p : x =:= y) -> (b : B) -> transport (\_ => B) p b =:= b
+transportConst : {A : Type} -> (B : Type) -> {x, y : A} -> (p : x =:= y) -> (b : B) -> transport (\_ => B) p b =:= b
 transportConst btype p b = J (\_, _, p => transport (\_ => btype) p b =:= b) (\_ => Refl) p
 
 
 -- f(p) = transportConst B p (f x) · f(p)
 -- That is, dependently applying a nondependent function to a path
 -- yields the same thing as nondependently applying the function
-apd_nondep : forall A. {B : Type} -> (f : A -> B) -> {x, y : A} -> (p : x =:= y) ->
+apd_nondep : {A : Type} -> {B : Type} -> (f : A -> B) -> {x, y : A} -> (p : x =:= y) ->
   apd f p =:= transportConst B p (f x) <> ap f p
 apd_nondep f p =
   let D : Dtype A
@@ -270,7 +270,7 @@ apd_nondep f p =
   in J D (\_ => Refl) p
 
 -- q* (p* u) = (p <> q)* u
-transport_distrib : forall A. {P : A -> Type} -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) -> (u : P x) ->
+transport_distrib : {A : Type} -> {P : A -> Type} -> {x, y, z : A} -> (p : x =:= y) -> (q : y =:= z) -> (u : P x) ->
   transport P q (transport P p u) =:= transport P (p <> q) u
 transport_distrib p q u =
   let D : Dtype A
@@ -278,7 +278,7 @@ transport_distrib p q u =
   in J D (\_, _, _ => Refl) p q u
 
 -- p[P ∘ f]* u = f(p)[P]* u
-transport_ap : forall A, B. (f : A -> B) -> {P : B -> Type} -> {x, y : A} -> (p : x =:= y) -> (u : P (f x)) ->
+transport_ap : {A, B : Type} -> (f : A -> B) -> {P : B -> Type} -> {x, y : A} -> (p : x =:= y) -> (u : P (f x)) ->
   transport (P . f) p u =:= transport P (ap f p) u
 transport_ap f p u =
   let D : Dtype A
@@ -286,7 +286,7 @@ transport_ap f p u =
   in J D (\_, _ => Refl) p u
 
 -- p[Q]* (f x u) = f y (p[P]* u)
-transport_commute : forall A. {P, Q : A -> Type} -> (f : (a : A) -> P a -> Q a) -> {x, y : A} -> (p : x =:= y) -> (u : P x) ->
+transport_commute : {A : Type} -> {P, Q : A -> Type} -> (f : (a : A) -> P a -> Q a) -> {x, y : A} -> (p : x =:= y) -> (u : P x) ->
   transport Q p (f x u) =:= f y (transport P p u)
 transport_commute f p u =
   let D : Dtype A
@@ -300,7 +300,7 @@ transport_commute f p u =
 -- Definition: Homotopy, i.e. extensionality
 -- f ~ g := ∀(x : A), f x = g x
 infix 5 ~~
-(~~) : forall A, P. (f, g : (x : A) -> P x) -> Type
+(~~) : {A : Type} -> {0 P : A -> Type} -> (f, g : (x : A) -> P x) -> Type
 f ~~ g = (x : A) -> f x =:= g x
 
 -- Reflexivity: f ~ f
@@ -312,12 +312,12 @@ hom_sym : forall A, P. {f, g : (x : A) -> P x} -> f ~~ g -> g ~~ f
 hom_sym fg x = invert (fg x)
 
 -- Transitivity: If f ~ g and g ~ h then f ~ h
-hom_trans : forall A, P. {f, g, h : (x : A) -> P x} -> f ~~ g -> g ~~ h -> f ~~ h
+hom_trans : forall A. {P : A -> Type} -> {f, g, h : (x : A) -> P x} -> f ~~ g -> g ~~ h -> f ~~ h
 hom_trans fg gh x = fg x <> gh x
 
 
 -- H x · g(p) = f(p) · H y
-naturality : forall A, B. {f, g : A -> B} -> (H : f ~~ g) -> {x, y : A} -> (p : x =:= y) ->
+naturality : {A, B : Type} -> {f, g : A -> B} -> (H : f ~~ g) -> {x, y : A} -> (p : x =:= y) ->
   H x <> ap g p =:= ap f p <> H y
 naturality hom p =
   let D : Dtype A
@@ -329,7 +329,7 @@ naturality hom p =
 -- H (f a) = f(H a)
 -- This follows from naturality, with x = f x, y = x, f = f, g = id
 -- In short, H : f ~ id
-hom_commute : forall A. {f : A -> A} -> (H : f ~~ id {a = A}) -> (a : A) -> H (f a) =:= ap f (H a)
+hom_commute : {A : Type} -> {f : A -> A} -> (H : f ~~ id {a = A}) -> (a : A) -> H (f a) =:= ap f (H a)
 hom_commute hom a =
   let naturalized : hom (f a) <> hom a =:= ap f (hom a) <> hom a
       naturalized = h1 <> h2
@@ -389,7 +389,7 @@ hom_commute hom a =
 
 -- Definition: Quasi-inverse
 -- qinv(f) := ∃(q : B -> A) s.t. (f ∘ g ~ id) ∧ (g ∘ f ~ id)
-qinv : forall A, B. (f : A -> B) -> Type
+qinv : {A, B : Type} -> (f : A -> B) -> Type
 qinv f = (g : B -> A ** (g . f ~~ id {a = A}, f . g ~~ id {a = B}))
 
 
@@ -408,7 +408,7 @@ qeqv_sym : forall A, B. A <~> B -> B <~> A
 qeqv_sym ((f, g) ** (p, q)) = ((g, f) ** (q, p))
 
 -- Transitivity : If A <~> B and B <~> C then A <~> B
-qeqv_trans : forall A, C, B. A <~> B -> B <~> C -> A <~> C
+qeqv_trans : {A, B, C : Type} -> A <~> B -> B <~> C -> A <~> C
 qeqv_trans ((c, d) ** (p, q)) ((f, g) ** (r, s)) =
   let fc : A -> C
       fc = f . c
@@ -422,7 +422,7 @@ qeqv_trans ((c, d) ** (p, q)) ((f, g) ** (r, s)) =
 
 -- Convenient infix form for qeqv_trans
 infixr 8 <->
-(<->) : forall A, C, B. A <~> B -> B <~> C -> A <~> C
+(<->) : {A, B, C : Type} -> A <~> B -> B <~> C -> A <~> C
 (<->) = qeqv_trans
 
 

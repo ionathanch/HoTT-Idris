@@ -240,7 +240,7 @@ ind'_id ctype c x y p = based_ind_id x (ctype x) (c x) y p
 --  ind_id D d a x p : (C : (z : A) -> a === z -> Type) -> C a Refl -> C x p
 -- Finally, this is exactly the ctype and c arguments, so we get
 --  ind_id D d a x p ctype c = C x p
-based_ind'_id : forall A. (a : A) -> (C : (x : A) -> a === x -> Type) ->
+based_ind'_id : {A: Type} -> (a : A) -> (C : (x : A) -> a === x -> Type) ->
   (c : C a Refl) ->
   (x : A) -> (p : a === x) -> C x p
 based_ind'_id a ctype c x p = ind_id

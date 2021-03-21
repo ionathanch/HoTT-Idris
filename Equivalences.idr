@@ -24,25 +24,25 @@ import SetsLogic
 
 -- Definition: Left inverse
 -- linv(f) := ∃(g : B -> A) s.t. g ∘ f ~ id
-linv : forall A, B. (f : A -> B) -> Type
+linv : {A, B : Type} -> (f : A -> B) -> Type
 linv f = (g : B -> A ** (g . f ~~ id {a = A}))
 
 -- Definition: Right inverse
 -- rinv(f) := ∃(h : B -> A) s.t. f ∘ h ~ id
-rinv : forall A, B. (f : A -> B) -> Type
+rinv : {A, B : Type} -> (f : A -> B) -> Type
 rinv f = (h : B -> A ** (f . h ~~ id {a = B}))
 
 -- Definition: Bi-invertible map
 -- binv(f) := linv(f) ∧ rinv(f)
-binv : forall A, B. (f : A -> B) -> Type
+binv : {A, B : Type} -> (f : A -> B) -> Type
 binv f = (linv f, rinv f)
 
 -- (i) qinv f -> binv f
-qinvToBinv : forall A, B. (f : A -> B) -> qinv f -> binv f
+qinvToBinv : {A, B : Type} -> (f : A -> B) -> qinv f -> binv f
 qinvToBinv f (g ** (alpha, beta)) = (MkDPair {a = B -> A} g alpha, MkDPair {a = B -> A} g beta)
 
 -- (ii) binv f -> qinv f
-binvToQinv : forall A, B. (f : A -> B) -> binv f -> qinv f
+binvToQinv : {A, B : Type} -> (f : A -> B) -> binv f -> qinv f
 binvToQinv f ((g ** alpha), (h ** beta)) =
   let gamma : h ~~ g
       gamma x = invert (alpha (h x)) <> ap g (beta x)
@@ -62,7 +62,7 @@ fib : {A, B : Type} -> (f : A -> B) -> (y : B) -> Type
 fib f y = (x : A ** f x =:= y)
 
 -- ∃(γ : x = x') s.t. f(γ) · p' = p -> (x, p) = (x', p')
-fibId : forall A, B. (f : A -> B) -> (y : B) -> (xp, xp' : fib f y) ->
+fibId : {A, B : Type} -> (f : A -> B) -> (y : B) -> (xp, xp' : fib f y) ->
   (gamma : (fst xp) =:= (fst xp') ** ap f gamma <> (snd xp') =:= snd xp) -> xp =:= xp'
 fibId f y (x ** p) (x' ** p') (gamma ** pp') =
   let pp1 : (invert (ap f gamma)) <> (ap f gamma <> p') =:= p'
@@ -78,7 +78,7 @@ fibId f y (x ** p) (x' ** p') (gamma ** pp') =
   in dprodId (gamma ** pp5)
 
 -- (x, p) = (x', p') -> ∃(γ : x = x') s.t. f(γ) · p' = p
-fibId_elim : forall A, B. (f : A -> B) -> (y : B) -> (xp, xp' : fib f y) ->
+fibId_elim : {A, B : Type} -> (f : A -> B) -> (y : B) -> (xp, xp' : fib f y) ->
   xp =:= xp' -> (gamma : (fst xp) =:= (fst xp') ** ap f gamma <> (snd xp') =:= snd xp)
 fibId_elim f y (x ** p) (x' ** p') q =
   let gamma : x =:= x'
@@ -99,7 +99,7 @@ fibId_elim f y (x ** p) (x' ** p') q =
 
 
 -- Definition: Contractible maps
-contr : forall A, B. (f : A -> B) -> Type
+contr : {A, B : Type} -> (f : A -> B) -> Type
 contr f = (y : B) -> isContr (fib f y)
 
 -- (i) qinf f -> contr f
@@ -109,9 +109,9 @@ qinvToContr f (g ** (alpha, beta)) y =
       beta' b = invert (beta (f (g b))) <> (ap f (alpha (g b)) <> beta b)
       tau : (a : A) -> beta' (f a) =:= ap f (alpha a)
       tau a =
-        let tau1 : ap f (alpha (g (f a))) =:= ap (f . g . f) (alpha a)
+        let tau1 : ap f (alpha (g (f a))) =:= ap (\x => f (g (f x))) (alpha a)
             tau1 = ap (ap f) (hom_commute alpha a) <> ap_concat (g . f) f (alpha a)
-            tau2 : ap (f . g . f) (alpha a) <> beta (f a) =:= beta (f (g (f a))) <> ap f (alpha a)
+            tau2 : ap (\x => f (g (f x))) (alpha a) <> beta (f a) =:= beta (f (g (f a))) <> ap f (alpha a)
             tau2 = invert (naturality (\a => beta (f a)) (alpha a))
             tau3 : ap f (alpha (g (f a))) <> beta (f a) =:= beta (f (g (f a))) <> ap f (alpha a)
             tau3 = (tau1 |> beta (f a)) <> tau2
@@ -144,7 +144,7 @@ qinvToContr f (g ** (alpha, beta)) y =
   in (fibCentre ** fibContr)
 
 -- (ii) contr f -> qinf f
-contrToQinv : forall A, B. (f : A -> B) -> contr f -> (g : B -> A ** ((x : A) -> g (f x) =:= x, (y : B) -> f (g y) =:= y))
+contrToQinv : {A, B : Type} -> (f : A -> B) -> contr f -> (g : B -> A ** ((x : A) -> g (f x) =:= x, (y : B) -> f (g y) =:= y))
 contrToQinv f contrF =
   let g : B -> A
       g y = fst (fst (contrF y))
@@ -245,21 +245,13 @@ fmap_qeqv f x v =
       <-> dprod_assoc
       <-> contrSingle
 
--- A <~> B -> isContr A <-> isContr B (reverse direction follows by symmetry)
--- Idris bug: Type checking fails when this is moved to SetsLogic
-qeqvToContr : forall A, B. A <~> B -> isContr A -> isContr B
-qeqvToContr ((f, g) ** (gf, fg)) (a ** contrA) =
-  let contrB : (y : B) -> f a =:= y
-      contrB y = ap f (contrA (g y)) <> fg y
-  in (f a ** contrB)
-
 -- If (fmap f) is an equivalence then ∀(x : A), (f x) are equivalences
 fmap_contr : {A : Type} -> {P, Q : A -> Type} -> (f : (x : A) -> P x -> Q x) -> contr (fmap f) -> (x : A) -> contr (f x)
 fmap_contr f contrFmap x v = qeqvToContr (fmap_qeqv f x v) (contrFmap (x ** v))
 
 
 -- If A, B are contractible, then (f : A -> B) is a contractible map
-funContr : forall A, B. isContr A -> isContr B -> (f : A -> B) -> contr f
+funContr : {A, B : Type} -> isContr A -> isContr B -> (f : A -> B) -> contr f
 funContr (a ** contrA) (b ** contrB) f y =
   let c : (x : A ** f x =:= y)
       c = (a ** invert (contrB (f a)) <> contrB y)

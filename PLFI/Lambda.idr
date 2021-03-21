@@ -155,8 +155,6 @@ multistepToFrom (Trans ms1 ms2) =
 
 -- Reduction is deterministic, in that for every redex,
 -- there is only one way to reduce it
--- This proof is incomplete, but because of the impossible branches,
--- the typechecker doesn't notice the rest of the missing cases
 deterministic : Red e e1 -> Red e e2 -> e1 = e2
 deterministic (Beta _) (Beta _) = Refl
 deterministic Mu Mu = Refl
@@ -168,6 +166,12 @@ deterministic (XiSucc red1) (XiSucc red2) = rewrite deterministic red1 red2 in R
 deterministic (XiCase red1) (XiCase red2) = rewrite deterministic red1 red2 in Refl
 deterministic (XiApp1 _) (XiApp2 VLam _) impossible
 deterministic (XiApp1 _) (XiApp2 VZero _) impossible
+deterministic (Beta v) (XiApp2 _ _) = ?betaapp
+deterministic (XiApp2 _ _) (Beta _) = ?appbeta
+deterministic (IotaS _) (XiCase _) = ?iotacase
+deterministic (XiCase _) (IotaS _) = ?caseiota
+deterministic (XiApp1 _) (XiApp2 _ _) = ?app12
+deterministic (XiApp2 _ _) (XiApp1 _) = ?app21
 
 -- If a term reduces to two terms then those two terms multistep to the same term
 diamond : {e2 : Term} -> Red e e1 -> Red e e2 -> Exists (\e' => (e1 ->> e', e2 ->> e'))
@@ -275,7 +279,4 @@ nope1 (TApp _ _) impossible
 
 -- Proof that (Lam x (App x x)) is not typeable
 nope2 : Not (Types ctxt (Lam x (App (Var x) (Var x))) a)
-nope2 (TLam (TApp (TVar in1) (TVar in2))) = contradiction (inInjective in1 in2)
-  where
-    contradiction : Not (Fun a b = a)
-    contradiction impossible
+nope2 (TLam (TApp (TVar in1) (TVar in1))) impossible

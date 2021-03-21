@@ -62,21 +62,21 @@ funext h =
   in res
 
 -- Elimination rule: f = g -> ∀x, f x = g x
-happly : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> f =:= g -> f ~~ g
+happly : {A : Type} -> {B : A -> Type} -> {f, g : (x : A) -> B x} -> f =:= g -> f ~~ g
 happly p = J {A = (x : A) -> B x} (\f, g, _ => f ~~ g) (\_, _ => Refl) p
 
 
 -- [AXIOM] Reflexivity: funext (\_ => Refl) = Refl
-fun_refl : forall A. {B : A -> Type} -> (f : (x : A) -> B x) -> funext {f = f} {g = f} (\_ => Refl) =:= Refl
+fun_refl : {A : Type} -> {B : A -> Type} -> (f : (x : A) -> B x) -> funext {f = f} {g = f} (\_ => Refl) =:= Refl
 
 -- Symmetry: funext (\x => (happly p x)⁻¹) = p⁻¹
-fun_sym : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
+fun_sym : {A : Type} -> {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
   funext (\x => invert (happly p x)) =:= invert p
 fun_sym p =
   J (\f, g, p => funext (\x => invert (happly {f} {g} p x)) =:= invert p) fun_refl p
 
 -- Transitivity: funext (\x => happly p x <> happly q x) = p <> q
-fun_trans : forall A. {B : A -> Type} -> {f, g, h : (x : A) -> B x} -> (p : f =:= g) -> (q : g =:= h) ->
+fun_trans : {A : Type} -> {B : A -> Type} -> {f, g, h : (x : A) -> B x} -> (p : f =:= g) -> (q : g =:= h) ->
   funext (\x => happly p x <> happly q x) =:= p <> q
 fun_trans p q =
   let D : Dtype ((x : A) -> B x)
@@ -90,7 +90,7 @@ fun_trans p q =
 
 
 -- Computation rule: happly (funext h) = h
-fun_comp : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (h : f ~~ g) ->
+fun_comp : {A : Type} -> {B : A -> Type} -> {f, g : (x : A) -> B x} -> (h : f ~~ g) ->
   happly (funext h) =:= h
 fun_comp h =
   let D : Dtype ((x : A) -> B x)
@@ -100,10 +100,10 @@ fun_comp h =
   in J D d (funext h) h
 
 -- Uniqueness principle: funext (happly h) = h
-fun_uniq : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
+fun_uniq : {A : Type} -> {B : A -> Type} -> {f, g : (x : A) -> B x} -> (p : f =:= g) ->
   funext (happly p) =:= p
 fun_uniq p = J {A = (x : A) -> B x} (\f, g, p => funext (happly p) =:= p) fun_refl p
 
 -- f = g <~> f ~~ g
-fun_qeqv : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> (f =:= g) <~> (f ~~ g)
+fun_qeqv : {A : Type} -> {B : A -> Type} -> {f, g : (x : A) -> B x} -> (f =:= g) <~> (f ~~ g)
 fun_qeqv = ((happly, funext) ** (fun_uniq, fun_comp))

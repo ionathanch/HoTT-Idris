@@ -33,7 +33,7 @@ setIsOne f x y p q r s =
   in leftCancel (g p) r s gprs
 
 -- Products of sets are sets
-prodIsSet : forall A, B. isSet A -> isSet B -> isSet (A, B)
+prodIsSet : {A, B : Type} -> isSet A -> isSet B -> isSet (A, B)
 prodIsSet f g x y p q =
   let pqfst : prodId_pr1 p =:= prodId_pr1 q
       pqfst = f (fst x) (fst y) (prodId_pr1 p) (prodId_pr1 q)
@@ -44,13 +44,35 @@ prodIsSet f g x y p q =
   in invert (prodId_uniq p) <> pq <> prodId_uniq q
 
 -- Functions to sets are sets
-funIsSet : forall A. {B : A -> Type} -> ((x : A) -> isSet (B x)) -> isSet ((x : A) -> B x)
+funIsSet : {A : Type} -> {B : A -> Type} -> ((x : A) -> isSet (B x)) -> isSet ((x : A) -> B x)
 funIsSet setB f g p q =
   let pq_happly : (x : A) -> happly p x =:= happly q x
       pq_happly = \x => setB x (f x) (g x) (happly p x) (happly q x)
       pq : funext (happly p) =:= funext (happly q)
       pq = ap funext (funext pq_happly)
   in invert (fun_uniq p) <> pq <> fun_uniq q
+
+{-
+-- Exercise 3.1: If A <~> B and A is a set, then B is a set
+AEqvBIsSet: {A, B: Type} -> (f: A -> B) -> (g: B -> A) -> ((x: B) -> f (g x) =:= x) -> isSet A -> isSet B
+AEqvBIsSet f g fg isSetA x y p q =
+  let --gpgq: ap g p =:= ap g q
+      --gpgq = isSetA (g x) (g y) (ap g p) (ap g q)
+      --fgpfgq: ap f (ap g p) =:= ap f (ap g q)
+      --fgpfgq = ap (ap f) gpgq
+      --fgpq: ap (f . g) p =:= ap (f . g) q
+      --fgpq = invert (ap_concat g f p) <> fgpfgq <> ap_concat g f q
+      funext' : forall A. {B : A -> Type} -> {f, g : (x : A) -> B x} -> ((x: A) -> f x =:= g x) -> f =:= g
+      transport' : forall A. (P : A -> Type) -> {x, y : A} -> (p : x =:= y) -> P x -> P y
+      transport' p Refl px = px
+      ap' : forall A, B. (f : A -> B) -> {x, y : A} -> x =:= y -> f x =:= f y
+      ap' f Refl = Refl
+      apd' : forall A. {P : A -> Type} -> (f : (a : A) -> P a) -> {x, y : A} -> (p : x =:= y) -> transport' P p (f x) =:= f y
+      apd' f Refl = Refl
+      helpp: transport' (\f => f x =:= f y) (funext' fg) (ap' (\x => f (g x)) p) =:= ap' (\x => x) p
+      --helpp = apd' (\f => ap' f p) (funext' fg)
+  in ?h
+-}
 
 ----------------------
 ---- PROPOSITIONS ----
@@ -66,11 +88,11 @@ logicalEquiv propP propQ f g =
   ((f, g) ** (\p => propP (g (f p)) p, \q => propQ (f (g q)) q))
 
 -- Mere propositions are quasi-equivalent to unit
-propUnit : forall P. isProp P -> (x : P) -> P <~> Unit
+propUnit : {P : Type} -> isProp P -> (x : P) -> P <~> Unit
 propUnit propP x = logicalEquiv propP (\(), () => Refl) (\_ => ()) (\() => x)
 
 -- Mere propsitions are sets
-propIsSet : forall P. isProp P -> isSet P
+propIsSet : {P : Type} -> isProp P -> isSet P
 propIsSet f x y p q =
   let g : (y : P) -> x =:= y
       g y = f x y
@@ -81,26 +103,26 @@ propIsSet f x y p q =
   in leftCancel (g x) p q gxpq
 
 -- isProp is a mere proposition
-isPropIsProp : forall P. isProp (isProp P)
+isPropIsProp : {P : Type} -> isProp (isProp P)
 isPropIsProp f g =
-  let fgxy : (x, y : P) -> f x y =:= g x y
-      fgxy x y = propIsSet f x y (f x y) (g x y)
-  in funext (\x => funext (fgxy x))
+  let isPropHom : (x, y : P) -> f x y =:= g x y
+      isPropHom x y = propIsSet f x y (f x y) (g x y)
+  in funext (\x => funext (isPropHom x))
 
 -- isSet is a mere proposition
-isSetIsProp : forall A. isProp (isSet A)
+isSetIsProp : {A : Type} -> isProp (isSet A)
 isSetIsProp f g =
-  let fgxypq : (x, y : A) -> (p, q : x =:= y) -> f x y p q =:= g x y p q
-      fgxypq x y p q = setIsOne f x y p q (f x y p q) (g x y p q)
-  in funext (\x => funext (\y => funext (\p => funext (fgxypq x y p))))
+  let isSetHom : (x, y : A) -> (p, q : x =:= y) -> f x y p q =:= g x y p q
+      isSetHom x y p q = setIsOne f x y p q (f x y p q) (g x y p q)
+  in funext (\x => funext (\y => funext (\p => funext (isSetHom x y p))))
 
 -- Products of propositions are propositions
--- Idris bug: It won't let me use isProp A and isProp B
-prodIsProp : forall A, B. ((a, a' : A) -> a =:= a') -> ((b, b' : B) -> b =:= b') -> isProp (A, B)
-prodIsProp f g (a, b) (a', b') = prodId (f a a', g b b')
+-- Idris bug: All hell breaks loose when you uncomment this out. I don't know why.
+-- prodIsProp : {A, B : Type} -> isProp A -> isProp B -> isProp (A, B)
+-- prodIsProp f g (a, b) (a', b') = prodId (f a a', g b b')
 
 -- Functions to propositions are propositions
-funIsProp : forall A. {B : A -> Type} -> ((x : A) -> isProp (B x)) -> isProp ((x : A) -> B x)
+funIsProp : {A : Type} -> {B : A -> Type} -> ((x : A) -> isProp (B x)) -> isProp ((x : A) -> B x)
 funIsProp propB f g = funext (\x => propB x (f x) (g x))
 
 -- The empty type is a proposition
@@ -128,7 +150,7 @@ decType : (A : Type) -> Type
 decType a = a # Not a
 
 -- Definition: Decidability of a type family
-decTypeFam : forall A. (B : A -> Type) -> Type
+decTypeFam : {A : Type} -> (B : A -> Type) -> Type
 decTypeFam b = (a : A) -> b a # Not (b a)
 
 -- Definition: Decidability of equality of a type
@@ -141,7 +163,7 @@ decEq a = (b, c : a) -> b =:= c # Not (b =:= c)
 
 -- If P is a proposition, ux = uv, and we have proofs of P ux and P vx,
 -- then those proofs must be equal.
-propNoSub : forall A. {P : A -> Type} -> ((x : A) -> isProp (P x)) ->
+propNoSub : {A : Type} -> {P : A -> Type} -> ((x : A) -> isProp (P x)) ->
   (u, v : DPair A P) -> fst u =:= fst v -> u =:= v
 propNoSub f (ux ** pu) (vx ** pv) p =
   dprodId (p ** f vx (transport P p pu) pv)
@@ -151,7 +173,7 @@ member : forall A. (a : A) -> (P : A -> Type) -> Type
 member a p = p a
 
 -- Definition: P ⊆ Q
-containedIn : forall A. (P, Q : A -> Type) -> Type
+containedIn : {A : Type} -> (P, Q : A -> Type) -> Type
 containedIn p q = (x : A) -> p x -> q x
 
 -- Definition: {A : Type | isSet A}
@@ -207,13 +229,13 @@ namespace Squash
 -- then there is a choice function g that can pick out the correct a
 -- associated with that x such that P is satisfied.
 AC : Type
-AC = forall X. (A : X -> Type) -> (P : (x : X) -> A x -> Type) ->
+AC = {X : Type} -> (A : X -> Type) -> (P : (x : X) -> A x -> Type) ->
   isSet X -> ((x : X) -> isSet (A x)) -> ((x : X) -> (a : A x) -> isProp (P x a)) ->
   ((x : X) -> Squash (a : A x ** P x a)) -> Squash (g : (x : X) -> A x ** (x : X) -> P x (g x))
 
 -- The cartesian product of a family of nonempty sets is nonempty.
 CP : Type
-CP = forall X. (Y : X -> Type) -> ((x : X) -> Squash (Y x)) -> Squash ((x : X) -> Y x)
+CP = {X : Type} -> (Y : X -> Type) -> ((x : X) -> Squash (Y x)) -> Squash ((x : X) -> Y x)
 
 ACqeqvCP : AC <~> CP
 
@@ -242,19 +264,19 @@ isContr : (A : Type) -> Type
 isContr a = (c : a ** (x : a) -> c =:= x)
 
 -- A contractible type is a mere proposition
-contrIsProp : forall A. isContr A -> isProp A
+contrIsProp : {A : Type} -> isContr A -> isProp A
 contrIsProp (c ** contrA) x y = invert (contrA x) <> contrA y
 
 -- An inhabited mere proposition is contractible
-propIsContr : forall A. A -> isProp A -> isContr A
+propIsContr : {A : Type} -> A -> isProp A -> isContr A
 propIsContr a propA = (a ** propA a)
 
 -- Contractible types are equivalent to unit
-contrUnit : forall A. isContr A -> A <~> Unit
+contrUnit : {A : Type} -> isContr A -> A <~> Unit
 contrUnit a@(c ** contrA) = propUnit (contrIsProp a) c
 
 -- Contractibility is a mere proposition
-isContrIsProp : forall A. isProp (isContr A)
+isContrIsProp : {A : Type} -> isProp (isContr A)
 isContrIsProp c@(a ** p) c'@(a' ** p') =
   let q : a =:= a'
       q = p a'
@@ -267,26 +289,26 @@ isContrIsProp c@(a ** p) c'@(a' ** p') =
   in dprodId (q ** propP p'' p')
 
 -- Contractibility of contractibles is contractible
-contrIsContr : forall A. isContr A -> isContr (isContr A)
+contrIsContr : {A : Type} -> isContr A -> isContr (isContr A)
 contrIsContr contrA = propIsContr contrA isContrIsProp
 
 -- Products of contractible types are contractible
-prodIsContr : forall A, B. isContr A -> isContr B -> isContr (A, B)
+prodIsContr : {A, B : Type} -> isContr A -> isContr B -> isContr (A, B)
 prodIsContr (a ** contrA) (b ** contrB) =
   let contrAB : (ab : (A, B)) -> (a, b) =:= ab
       contrAB (a', b') = prodId (contrA a', contrB b')
   in ((a, b) ** contrAB)
 
 -- Functions to contractible types are contractible
-funIsContr : forall A. {P : A -> Type} -> ((a : A) -> isContr (P a)) -> isContr ((x : A) -> P x)
-funIsContr contrP = propIsContr (\x => fst (contrP x)) (funIsProp (\a => contrIsProp (contrP a)))
+funIsContr : {A : Type} -> {P : A -> Type} -> ((a : A) -> isContr (P a)) -> isContr ((x : A) -> P x)
+funIsContr contrP = propIsContr {A = (a : A) -> P a} (\x => fst (contrP x)) (funIsProp (\a => contrIsProp (contrP a)))
 
 -- The unit type is contractible
 unitIsContr : isContr Unit
 unitIsContr = MkDPair () (\() => Refl)
 
 -- ∃(x : A) s.t. a = x is contractible
-singleLeftIsContr : forall A. (a : A) -> isContr (x : A ** a =:= x)
+singleLeftIsContr : {A : Type} -> (a : A) -> isContr (x : A ** a =:= x)
 singleLeftIsContr a =
   let centre : (x : A ** a =:= x)
       centre = (a ** Refl)
@@ -295,7 +317,7 @@ singleLeftIsContr a =
   in (centre ** centreEq)
 
 -- ∃(x : A) s.t. x = a is contractible
-singleRightIsContr : forall A. (a : A) -> isContr (x : A ** x =:= a)
+singleRightIsContr : {A : Type} -> (a : A) -> isContr (x : A ** x =:= a)
 singleRightIsContr a =
   let centre : (x : A ** x =:= a)
       centre = (a ** Refl)
@@ -308,10 +330,12 @@ singleRightIsContr a =
 -- there is a retraction (r : A -> B) and a section (s : B -> A) such that
 -- there is a homotopy (r . s ~~ id)
 isRetr : (B : Type) -> (A : Type) -> Type
-isRetr b a = (rs : (a -> b, b -> a) ** (y : b) -> (fst rs) (snd rs y) =:= y)
+isRetr b a = (rs : (a -> b, b -> a) **
+  let (r, s) = rs
+  in (y : b) -> r (s y) =:= y)
 
 -- If B is a retract of A and A is contractible then B is contractible
-retrIsContr : forall A, B. isRetr B A -> isContr A -> isContr B
+retrIsContr : {A, B : Type} -> isRetr B A -> isContr A -> isContr B
 retrIsContr ((r, s) ** e) (a0 ** contrA) =
   let b0 : B
       b0 = r a0
@@ -330,13 +354,13 @@ contrFamilyType contrP =
   in ((fst, g) ** (gfst, \_ => Refl))
 
 -- ∀(x : A) isContr A @ c -> ∃(x : A) s.t. P x <~> P c
-contrFamilyCentre : forall A. {P : A -> Type} -> (contrA : isContr A) -> (x : A ** P x) <~> P (fst contrA)
+contrFamilyCentre : {A : Type} -> {P : A -> Type} -> (contrA : isContr A) -> (x : A ** P x) <~> P (fst contrA)
 contrFamilyCentre (c ** contrA) =
   let f : (x : A ** P x) -> P c
       f (x ** px) = transport P (invert (contrA x)) px
       g : P c -> (x : A ** P x)
       g pc = (c ** pc)
-      fg : (pc : P c) -> transport P (invert (contrA c)) pc =:= pc
+      fg : (pc : P c) -> transport {A} P (invert (contrA c)) pc =:= pc
       gf : (xpx : (x : A ** P x)) -> g (f xpx) =:= xpx
       gf (x ** px) =
         let cx : c =:= x
@@ -350,7 +374,7 @@ contrFamilyCentre (c ** contrA) =
 
 
 -- A is a mere proposition iff ∀(x, y : A), x = y is contractible
-propIsContrId : forall A. isProp A -> (x, y : A) -> isContr (x =:= y)
+propIsContrId : {A : Type} -> isProp A -> (x, y : A) -> isContr (x =:= y)
 propIsContrId propA x y =
   let xy : x =:= y
       xy = propA x y
@@ -358,3 +382,11 @@ propIsContrId propA x y =
 
 contrIdIsProp : forall A. ((x, y : A) -> isContr (x =:= y)) -> isProp A
 contrIdIsProp contrId x y = fst (contrId x y)
+
+
+-- A <~> B -> isContr A <-> isContr B (reverse direction follows by symmetry)
+qeqvToContr : {A, B : Type} -> A <~> B -> isContr A -> isContr B
+qeqvToContr ((f, g) ** (gf, fg)) (a ** contrA) =
+  let contrB : (y : B) -> f a =:= y
+      contrB y = ap f (contrA (g y)) <> fg y
+  in (f a ** contrB)

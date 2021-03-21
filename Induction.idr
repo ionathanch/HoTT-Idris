@@ -16,7 +16,7 @@ data W : (A : Type) -> (B : A -> Type) -> Type where
 -- The type of the inductive premise
 -- Given some motive E, for any "constructor" a and its "arguments" f,
 -- we must show that the inductive hypothesis holds, i.e. every sub-W (f b) satisfies E.
-eind : forall A. {B : A -> Type} -> (E : W A B -> Type) -> Type
+eind : {A: Type} -> {B : A -> Type} -> (E : W A B -> Type) -> Type
 eind etype = (a : A) -> (f : B a -> W A B) -> (g : (b : B a) -> etype (f b)) -> etype (Sup a f)
 
 -- Computation rule: Given a motive E, if the inductive premise holds, then ∀(w : W A B), E w holds.
