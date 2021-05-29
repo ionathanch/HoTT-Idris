@@ -1,6 +1,6 @@
 # HoTT in Idris
 
-This repository will contain a formalization of some of the content in the Homotopy Type Theory textbook in Idris.
+This repository contains a partial mechanization of some of the content in the Homotopy Type Theory textbook in Idris.
 Of course, univalence is inconsistent with the brand of pattern-matching that Idris has (which implies the uniqueness of identity proofs, axiom K, etc.), so we will have to be careful never to match on `Refl`.
 According to [Pattern-Matching without K](https://dl.acm.org/doi/10.1145/2692915.2628139), this is only an issue when pattern-matching on `Refl` produces a unification problem shaped like `x = x`, but just to be safe, we will use eliminators (i.e. J) throughout instead.
 
